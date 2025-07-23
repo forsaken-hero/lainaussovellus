@@ -9,4 +9,5 @@
 -  Käyttäjä pystyy valitsemaan tavaroille yhden tai useamman luokittelun (esim. tavaroiden laji, tuotemerkki, väri, jne.).
 -  Käyttäjä pystyy kirjaamaan lainaustoimintaa. Lainausilmoituksessa näytetään, milloin tavarat lainataan ja palautetaan.
 -  Käyttäjä pystyy kirjoittamaan kommentteja tavaroiden kunnosta.
+
 Tässä pääasiallinen tietokohde on tavarailmoitus ja toissijainen tietokohde on omistaja, lainaustoiminnat, ja kommentit.
