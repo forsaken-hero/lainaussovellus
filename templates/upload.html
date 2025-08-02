@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+{% if item_data %}
+  <h2>Muokkaa Tavaran Tiedot</h2>
+{% else %}
+  <h2>Lisää Tavara</h2>
+{% endif %}
+
+{% set action_url = "/edit/" + (item_data[0]|string) if item_data else "/upload" %}
+<form action="{{ action_url }}" method="post">
+  <p>
+    <label for="upload_main_text">Tavaran nimi:</label><br />
+    <input type="text" id="item_name" name="item_name" value="{{ item_data[1] if item_data else '' }}" maxlength="100" required />
+  </p>
+  <p>
+    <label for="upload_main_text">Luokkitelut:</label><br />
+    {% for classification_key in classification_keys %}
+      <input type="checkbox"
+       id="classification_checkbox_{{ classification_key[0] }}"
+       name="classification_checkbox[]"
+       value="{{ classification_key[0] }}"
+       {% if classification_key[0]|int in item_classifications %}checked{% endif %}/>
+      <label for="classification_checkbox"> {{ classification_key[1] }}</label><br>
+    {% endfor %}
+  </p>
+
+  {% if item_data %}
+    <input type="submit" value="Muokkaa" />
+  {% else %}
+    <input type="submit" value="Lisää tavara" />
+  {% endif %}
+
+  <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+</form>
+
+<br />
+<a href="/logout">Kirjaudu ulos</a>
+
+{% endblock %}

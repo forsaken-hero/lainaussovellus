@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>
+  Kirjaudu sisään
+</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+<form action="/" method="post">
+  <p>
+    <label for="username">Tunnus:</label><br />
+    <input type="text" id="username" name="username" />
+  </p>
+  <p>
+    <label for="password">Salasana</label>:<br />
+    <input type="password" id="password" name="password" />
+  </p>
+
+  <input type="submit" value="Kirjaudu" />
+</form>
+
+<p>Ei ole tunnus vielä?</p>
+
+<a href="/register">Luo tunnus</a>
+{% endblock %}

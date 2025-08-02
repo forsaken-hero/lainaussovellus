@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>Tervetuloa, {{username}}</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+{% if items %}
+  <p>Saatavilla olevat tavarat varastossa:</p>
+  {% for item in items %}
+  <p class = "item_list">
+    <b>{{ item[1] }}</b>
+    <a href="/borrow/{{ item[0] }}">Lainaa</a>
+    {% if session['user_id'] == item[2] %}
+      <a href="/edit/{{ item[0] }}">Muokkaa</a>      
+      <a href="/remove/{{ item[0] }}">Poistaa</a>      
+    {% endif %}
+  </p>
+  {% endfor %}
+
+
+
+
+{% else %}
+  <p>Varasto on tällä hetkellä tyhjä</p>
+{% endif %}
+
+
+<a href="/upload">Lisää tavara varastoon</a> <br /> <br />
+<a href="/logout">Kirjaudu ulos</a>
+
+
+{% endblock %}
