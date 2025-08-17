@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>Haku</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+<form action="/search" method="POST">
+  <p>
+    <input type="text" id="query" name="query" value = "{{query if query else '' }}" minlength = "1" required> <input type="submit" value="Hae">
+  </p>
+</form>
+
+{% if query %}
+  {% if results %}
+    {% for result in results %}
+      <br/><a href="/item/{{result[0]}}">{{result[1]}}</a> <br />
+      {% if results[result] | length > 0 %}
+        Haun osumat:<br/>
+        {% for each in results[result] %}
+          {{each}}: {% for text in results[result][each] %}{{text}} {% endfor %}<br/>
+        {% endfor %}<br/>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <label for="search_main_text"> Ei ole tuloksia hakusanalla {{query}}.</label>
+  {% endif %}
+{% endif %}
+
+<a href="/front_page/{{username}}">Etusivulle</a> <br /> <br />
+<a href="/upload">Lisää tavara varastoon</a> <br /> <br />
+<a href="/logout">Kirjaudu ulos</a>
+
+
+{% endblock %}

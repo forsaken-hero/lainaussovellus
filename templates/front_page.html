@@ -10,16 +10,24 @@
 </p>
 {% endfor %}
 
-{% if items %}
-  <p>Saatavilla olevat tavarat varastossa:</p>
-  {% for item in items %}
+<form action="/search" method="POST">
+  <p>
+    Haku<br/>
+    <input type="text" id="query" name="query" minlength = "1" required> <input type="submit" value="Hae">
+  </p>
+</form>
+
+{% if available_items %}
+  <p class="front_page_main_text">Saatavilla olevat tavarat varastossa:</p>
+  {% for item in available_items %}
   <p class = "item_list">
-    <b>{{ item[1] }}</b>
+    <a href="/item/{{ item[0] }}">{{ item[1] }}</a>
     <a href="/borrow/{{ item[0] }}">Lainaa</a>
     {% if session['user_id'] == item[2] %}
       <a href="/edit/{{ item[0] }}">Muokkaa</a>      
-      <a href="/remove/{{ item[0] }}">Poistaa</a>      
-    {% endif %}
+      <a href="/remove/{{ item[0] }}">Poista</a>      
+    {% endif %}<br/>
+    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
   </p>
   {% endfor %}
 
@@ -27,9 +35,24 @@
 
 
 {% else %}
-  <p>Varasto on tällä hetkellä tyhjä</p>
+  <p class="front_page_main_text">Varasto on tällä hetkellä tyhjä</p>
 {% endif %}
 
+{% if borroweds %}
+  <p class="front_page_main_text">Lainatut tavarat varastosta:</p>
+  {% for item in borroweds %}
+  <p class = "borroweds_list">
+    <a href="/item/{{ item[0] }}">{{ item[1] }}</a> lainaaja {{item[6]}}, lainattu {{item[5]}} lähtien <br/>
+    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
+    {% if session['user_id'] == item[4] %}
+      <a href="/return/{{ item[0] }}">Palauta</a>
+    {% endif %}
+    {% if session['user_id'] == item[2] %}
+      <a href="/edit/{{ item[0] }}">Muokkaa</a>         
+    {% endif %}
+  </p>
+  {% endfor %}
+{% endif %}
 
 <a href="/upload">Lisää tavara varastoon</a> <br /> <br />
 <a href="/logout">Kirjaudu ulos</a>

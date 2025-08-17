@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Poista {{item_name}}</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+<p>
+  Oletko varma, että haluat poistaa {{item_name}}?
+</p>
+<form method="POST" action="/remove/{{item_id|string}}">
+    <input type="submit" name="choice" value="Kyllä">
+    <input type="submit" name="choice" value="Ei">
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+</form>
+
+<br />
+<a href="/logout">Kirjaudu ulos</a>
+{% endblock %}

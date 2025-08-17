@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{item_name}}</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+{% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" width="300"> <br /> {% endif %}
+<p>
+  <label for="item_main_text">Omistaja: {{owner_username}}</label><br /><br />
+
+  <label for="item_main_text">Luokkitelut:</label><br />
+  {% for classification in classifications %}
+    <label for="item_side_text">{{classification_keys[classification]}}</label><br/>
+  {% endfor %}
+  <br />
+  <label for="item_main_text">Ominaisuudet:</label><br />
+  {% for characteristic in characteristics %}
+    <label for="item_side_text">{{characteristic_keys[characteristic]}}:  {{characteristics[characteristic]}}</label><br/>
+  {% endfor %}
+  <br />
+  <label for="item_main_text">Kommentti:</label><br/>
+  <label for="item_side_text">{{item_comment if item_comment else ''}}</label><br/>
+</p>
+{% if allowed %}
+  <a href="/edit/{{item_id}}">Muokkaa tavara</a> <br /> <br />
+  <a href="/remove/{{item_id}}">Poista tavara</a> <br /> <br />
+{% endif %}
+{% if available %}
+  <a href="/borrow/{{item_id}}">Lainaa tavara</a> <br /> <br />
+{% endif%}
+<a href="/front_page/{{username}}">Etusivulle</a> <br /> <br />
+<a href="/upload">Lisää tavara varastoon</a> <br /> <br />
+<a href="/logout">Kirjaudu ulos</a>
+
+
+{% endblock %}

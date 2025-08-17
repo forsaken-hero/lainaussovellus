@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h2>Lainaa {{item_name}}</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+<p>
+  {% if ret %} Haluatko palauttaa {% else %}  Haluatko lainata   {% endif %} {{item_name}}?
+
+</p>
+{% set action_url = "/return/" + (item_id|string) if ret else "/borrow/" + (item_id|string) %}
+<form method="POST" action="{{ action_url }}">
+    <input type="submit" name="choice" value="Kyllä">
+    <input type="submit" name="choice" value="Ei">
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+</form>
+
+<br />
+<a href="/logout">Kirjaudu ulos</a>
+{% endblock %}
