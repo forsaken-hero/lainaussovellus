@@ -62,7 +62,7 @@ flask run tai flask run --debug
 
 
 
-#välipalautus 2
+**#välipalautus 2**
 
 Sovellus on yleiskäyttövaraston lainausjärjestelmä. Tällä kehitysversiollä sovelluksella onnistuvat seuraavat toiminnot:
 
@@ -86,7 +86,7 @@ Sovellus on kehitetty kurssin esimerkkisoveluksen kehyksestä, käytetyt tiedost
 
 Testaa ensin luomalla database.db schema.sql:stä, sitten käynnistämällä flask. Sen jälkeen pitäisi pystyä luomaan uuden tunnuksen, lisäämään ja muokkaamaan tietokohteita.
 
-#välipalautus 1
+**#välipalautus 1**
 
 -  Sovelluksessa käyttäjät pystyvät ylläpitämään yhteiskäyttövaraston tavaroiden lainaustoiminnat.
 -  Käyttäjä pystyy luomaan tunnuksen ja kirjautumaan sisään sovellukseen.
