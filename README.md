@@ -61,6 +61,8 @@ sqlite3 database.db < init.sql
 flask run tai flask run --debug
 
 
+-----------------------------------------------------------------------------------------------------------------------------
+
 
 **#välipalautus 2**
 
@@ -85,6 +87,10 @@ Lopullista palautusta varten täytyy vielä kehittää mm.
 Sovellus on kehitetty kurssin esimerkkisoveluksen kehyksestä, käytetyt tiedostot viittavat esimerkkisoveluksen tiedostoihin ja sovelluksen rakenne on samanlaista.
 
 Testaa ensin luomalla database.db schema.sql:stä, sitten käynnistämällä flask. Sen jälkeen pitäisi pystyä luomaan uuden tunnuksen, lisäämään ja muokkaamaan tietokohteita.
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+
 
 **#välipalautus 1**
 
