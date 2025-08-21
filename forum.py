@@ -1,19 +1,35 @@
 
-import db, itertools, datetime, users, base64
+import db, itertools, datetime, users, app, base64
 
 
-def available_items():
+def available_items(page, page_size):
     print("forum.py's available_items called")    
-    sql = "SELECT items.item_id, items.item_name, items.owner_id, items.item_picture FROM items items WHERE items.item_id NOT IN (SELECT borrowings.item_id FROM borrowings borrowings)"
+    sql = """SELECT i.item_id, 
+                    i.item_name, 
+                    i.owner_id, 
+                    i.item_picture 
+            FROM items i 
+            WHERE i.item_id 
+            NOT IN (SELECT b.item_id FROM borrowings b)
+            ORDER BY i.item_id ASC
+            LIMIT ? OFFSET ?
+            """
     out = []
-    for data in db.query(sql):
+    limit = page_size
+    offset = page_size * (page - 1)
+    for data in db.query(sql,[limit, offset]):
         item_id, item_name, owner_id, item_picture = data
-        picture_b64 = ""
-        if item_picture:
-            picture_b64 = base64.b64encode(item_picture).decode('utf-8')
+        picture_b64 = app.picture_converter(item_picture)
         out.append([item_id, item_name, owner_id, picture_b64])
     print("forum.py's available_items data transfer succeeded, returning", out)    
     return out
+
+def available_items_count():
+    print("forum.py's available_items_call called")
+    sql = "SELECT COUNT(*) FROM items i WHERE i.item_id NOT IN (SELECT b.item_id FROM borrowings b)"
+    out = db.query(sql)[0][0]
+    print("forum.py's available_items_count data transfer succeeded, returning", out)    
+    return out    
 
 def borrowed_items():#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture, 4=borrower_id, 5 = borrow_time, 6 = borrower_username
     print("forum.py's borrowed_items called")    
@@ -38,6 +54,14 @@ def borrowed_items():#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture
 
     print("forum.py's borrowed_items data transfer succeeded, returning", out)    
     return out
+
+def borrowed_items_count():
+    print("forum.py's borrowed_items_count called")
+    sql = "SELECT COUNT(*) FROM items i WHERE i.item_id IN (SELECT b.item_id FROM borrowings b)"
+    out = db.query(sql)[0][0]
+    print("forum.py's borrowed_items_count data transfer succeeded, returning", out)    
+    return out    
+
 
 def is_borrowed(item_id):
     print("forum.py's is_borrowed called")

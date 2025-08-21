@@ -1,10 +1,10 @@
 from werkzeug.security import check_password_hash, generate_password_hash
 import db
-def create_user(username, password, picture = None, administrator = 0):
+def create_user(username, password):
     print("users.py's create_user called")
     password_hash = generate_password_hash(password)
-    sql = "INSERT INTO users (username, password_hash, user_picture, administrator) VALUES (?, ?, ?, ?)"
-    db.execute(sql,[username,password_hash,picture,administrator])
+    sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)"
+    db.execute(sql,[username,password_hash])
     print("users.py's create_user successful successful, returning user_id")
     return db.last_insert_id()
 

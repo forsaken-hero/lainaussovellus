@@ -31,30 +31,21 @@
   </p>
   {% endfor %}
 
-
+  <p class="front_page_page_nav">
+  {% if page >= 2 %}<a href="{{ url_for('front_page', username = username, page = page - 1) }}">&lt;&lt;</a>{% endif %}
+  Sivu {{ page }}/{{ page_count }}
+  {% if page < page_count %}<a href="{{ url_for('front_page', username = username, page = page + 1) }}">&gt;&gt;</a>{% endif %}
+  </p>
 
 
 {% else %}
   <p class="front_page_main_text">Varasto on tällä hetkellä tyhjä</p>
 {% endif %}
 
-{% if borroweds %}
-  <p class="front_page_main_text">Lainatut tavarat varastosta:</p>
-  {% for item in borroweds %}
-  <p class = "borroweds_list">
-    <a href="/item/{{ item[0] }}">{{ item[1] }}</a> lainaaja {{item[6]}}, lainattu {{item[5]}} lähtien <br/>
-    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
-    {% if session['user_id'] == item[4] %}
-      <a href="/return/{{ item[0] }}">Palauta</a>
-    {% endif %}
-    {% if session['user_id'] == item[2] %}
-      <a href="/edit/{{ item[0] }}">Muokkaa</a>         
-    {% endif %}
-  </p>
-  {% endfor %}
-{% endif %}
+
 
 <a href="/upload">Lisää tavara varastoon</a> <br /> <br />
+<a href="/borrowed">Katso lainatut tavarat</a> <br /> <br />
 <a href="/logout">Kirjaudu ulos</a>
 
 

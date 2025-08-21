@@ -1,12 +1,9 @@
-import math, secrets, sqlite3, db, config, forum, users, markupsafe,base64
+import math, secrets, sqlite3, db, config, forum, users, markupsafe, base64
 from flask import Flask, abort, flash, make_response, redirect, render_template, request, session
 from werkzeug.exceptions import Forbidden
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
-
-
-
 
 
 def require_login():
@@ -198,16 +195,31 @@ def register():
 
 
 @app.route("/front_page/<username>", methods=["GET","POST"])
-def front_page(username):
+@app.route("/front_page/<username>/<int:page>", methods=["GET","POST"])
+def front_page(username, page = 1):
     check1 = login_check()
     if check1: return check1
 
     if request.method == "GET":
+        print("app.py's front_page method get requested, for front_page/" + username + "/" + str(page))
         if username != session['username']: 
             print("redirecting to the right URL of /front_page/" + str(session['username']))
             return redirect("/front_page/" + str(session['username']))
+
+        available_items_count = forum.available_items_count()
+        page_size = 10
+        page_count = math.ceil(available_items_count / page_size)
+        page_count = max(page_count, 1)
+
+        username = session["username"]
+
+        if page < 1:
+            return redirect("/front_page/" + username + "/1")
+        if page > page_count:
+            return redirect("/front_page/" + username + "/" + str(page_count))
+
         print("app.py's front_page method get. Session's user id =",session["user_id"],",session's csrf token =",session["csrf_token"],"username from URL",username)
-        return render_template("front_page.html",username=session["username"],available_items=forum.available_items(),borroweds = forum.borrowed_items())
+        return render_template("front_page.html", username = username, available_items = forum.available_items(page, page_size), page = page, page_count = page_count)
 
 @app.route("/upload", methods=["GET","POST"])#upload.html sends item_name & csrf_token
 def upload():
@@ -406,7 +418,8 @@ def search ():
 
     if request.method == "GET":
         print("app.py's search method get requested")
-        return render_template("search.html")
+        username = session["username"]
+        return render_template("search.html", username = username)
     
     if request.method == "POST":
         print("app.py's search method post requested")
@@ -419,8 +432,9 @@ def search ():
         
         results = forum.search(query)
         if len(results) == 0: results = None
+        username = session["username"]
         print("app.py's query done rendering search.html with results",results)
-        return render_template("search.html", results= results, query = query)
+        return render_template("search.html", results= results, query = query, username = username)
 
 @app.route("/dev")
 def dev():
@@ -440,6 +454,7 @@ def dev():
 @app.route("/logout")
 def logout():
     session.clear()
+    flash("Olet kirjautunut ulos")
     print("app.py's logout called, session cleared. session now =", session)
     return redirect("/")
 
