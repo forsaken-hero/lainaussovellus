@@ -2,8 +2,8 @@ CREATE TABLE users (
     user_id INTEGER PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    user_picture BLOB DEFAULT NULL,
-    administrator BOOLEAN DEFAULT 0
+    user_picture BLOB DEFAULT NULL--,
+    --administrator BOOLEAN DEFAULT 0
 );
 
 CREATE TABLE items (
