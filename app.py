@@ -34,7 +34,7 @@ def borrow_check(item_id):
     if forum.is_borrowed(item_id) == 1:
         flash("Tavara on jo lainattu")
         print("app.py's borrow_check flash recorded, redirecting to frontpage")
-        return redirect("/front_page/"+str(session['username']))      
+        return redirect("/front_page/")      
     
 
 def return_check(item_id):
@@ -42,7 +42,7 @@ def return_check(item_id):
     if forum.is_borrowed(item_id) == None:
         flash("Tavara on jo varastossa")
         print("app.py's return_check flash recorded, redirecting to frontpage")
-        return redirect("/front_page/"+str(session['username']))      
+        return redirect("/front_page/")      
     
 def check_owner_id(item_id):
     print("app.py's check_owner_id called for item_id",item_id)
@@ -50,7 +50,7 @@ def check_owner_id(item_id):
     if owner_id != int(session["user_id"]):
         print("app.py's check_owner_id owner_id != session['user_id'] visited, with owner_id =",owner_id,"session['user_id]=",session['user_id'])
         flash("Sinulla ei ole oikeutta muokata kyseistä tavaraa!")
-        return redirect("/front_page/"+str(session['username']))
+        return redirect("/front_page/")
 
 def check_borrower_id(item_id):
     print("app.py's check_borrower_id called for item_id",item_id)
@@ -58,7 +58,7 @@ def check_borrower_id(item_id):
     if borrower_id != int(session["user_id"]):
         print("app.py's check_borrower_id borrower_id != session['user_id'] visited, with borrower_id =",borrower_id,"session['user_id]=",session['user_id'])        
         flash("Tavara ei ole hallussasi!")
-        return redirect("/front_page/"+str(session['username']))
+        return redirect("/front_page/")
 
 def length_check(string,a,b):
     print("app.py's length_check called, checking string",string,"is it between",a,"-",b)
@@ -80,12 +80,12 @@ def picture_check(file,type = ".jpg", size = 100 * 1024)  :
     print("app.py's picture_check finished, returning .read() image file",image)
     return image
 
-def picture_request(fieldname = "item_picture"): #do we need try except here later?
+def picture_request(fieldname = "item_picture", type = ".jpg", size = 100 * 1024): #do we need try except here later?
     print("app.py's picture_request called")
     file = request.files[fieldname]
     print("app.py's picture_request file.filename =",file.filename)
     if not file or file.filename == "": return None
-    out = picture_check(file)
+    out = picture_check(file, type, size)
     print("app.py's picture_request success, returning",out)
     return out
 
@@ -130,8 +130,8 @@ def login():
     try:
         print("app.py's login try")  
         require_login()
-        print("app.py's login, already logged in redirecting to the front_page/"+session['username'])
-        return redirect("/front_page/"+str(session['username']))
+        print("app.py's login, already logged in redirecting to the front_page/")
+        return redirect("/front_page/")
     except:
         if request.method == "GET":
             print("app.py's login method get requested. session =",session.values)
@@ -148,7 +148,7 @@ def login():
                 session["username"] = username
                 session["csrf_token"] = secrets.token_hex(16)
                 print('check login correct. session["user_id"] =', session["user_id"],'session["username"]=',session["username"],'session["csrf_token"] =', secrets.token_hex(16),' redirect to /front_page/',str(session["username"]))
-                return redirect("/front_page/"+str(session['username']))
+                return redirect("/front_page/")
             else:
                 flash("VIRHE: Väärä tunnus tai salasana")
                 print('Väärä tunnus tai salasana flash recorded. Redirecting to /')
@@ -162,8 +162,8 @@ def register():
         print("app.py's register try")  
         require_login()
         flash('Kirjaudu ulos ensin päästäksesi rekisteröimään uudella tunnuksella')
-        print("app.py's register, redirecting to the front_page/"+session['username'])
-        return redirect("/front_page/" + str(session['username']))
+        print("app.py's register, redirecting to the front_page/")
+        return redirect("/front_page/")
     except:
         if request.method == "GET":
             print("app.py's register method get requested.")
@@ -191,35 +191,97 @@ def register():
                 flash("VIRHE: Valitsemasi tunnus on jo varattu")
                 filled = {"username": username}
                 print('tunnus on jo varattu flash recorded. filled = ',filled)
-                return render_template("register.html", filled=filled,)# show_flashes = True)
+                return render_template("register.html", filled=filled)# show_flashes = True)
 
 
-@app.route("/front_page/<username>", methods=["GET","POST"])
-@app.route("/front_page/<username>/<int:page>", methods=["GET","POST"])
-def front_page(username, page = 1):
+@app.route("/front_page/", methods=["GET","POST"])
+@app.route("/front_page/<int:page>", methods=["GET","POST"])
+def front_page(page = 1):
     check1 = login_check()
     if check1: return check1
 
     if request.method == "GET":
-        print("app.py's front_page method get requested, for front_page/" + username + "/" + str(page))
-        if username != session['username']: 
-            print("redirecting to the right URL of /front_page/" + str(session['username']))
-            return redirect("/front_page/" + str(session['username']))
+        print("app.py's front_page method get requested, for front_page/" + str(page))
 
         available_items_count = forum.available_items_count()
         page_size = 10
         page_count = math.ceil(available_items_count / page_size)
         page_count = max(page_count, 1)
 
-        username = session["username"]
+        if page < 1:
+            return redirect("/front_page/1")
+        if page > page_count:
+            return redirect("/front_page/" + str(page_count))
+
+        print("app.py's front_page method get finished, rendering front_page.html")
+        return render_template("front_page.html", available_items_count = available_items_count, username = session['username'], available_items = forum.available_items(page, page_size), page = page, page_count = page_count)
+
+@app.route("/borrowed/", methods=["GET","POST"])
+@app.route("/borrowed/<int:page>", methods=["GET","POST"])
+def borrowed(page = 1):
+    check1 = login_check()
+    if check1: return check1
+
+    if request.method == "GET":
+        print("app.py's borrowed method get requested, for borrowed/" + str(page))
+        
+        borrowed_items_count = forum.borrowed_items_count()
+        page_size = 10
+        page_count = math.ceil(borrowed_items_count / page_size)
+        page_count = max(page_count, 1)
+
 
         if page < 1:
-            return redirect("/front_page/" + username + "/1")
+            return redirect("/borrowed/1")
         if page > page_count:
-            return redirect("/front_page/" + username + "/" + str(page_count))
+            return redirect("/borrowed/" + str(page_count))
 
-        print("app.py's front_page method get. Session's user id =",session["user_id"],",session's csrf token =",session["csrf_token"],"username from URL",username)
-        return render_template("front_page.html", username = username, available_items = forum.available_items(page, page_size), page = page, page_count = page_count)
+        print("app.py's borrowed method get finished, rendering borrowed.html")
+        return render_template("borrowed.html", borrowed_items = forum.borrowed_items(page, page_size), borrowed_items_count = borrowed_items_count, page = page, page_count = page_count)
+
+@app.route("/user/<user>", methods=["GET","POST"])
+@app.route("/user/<user>/<int:page>", methods=["GET","POST"])
+def user_page(user, page = 1):
+    check1 = login_check()
+    if check1: return check1
+
+    if request.method == "GET":
+        print("app.py's user_page method get requested, for user/" + user + "/" + str(page))
+
+        id, user_picture = users.user_id_picture(user)
+        user_uploads_count = forum.user_uploads_count(id)
+        page_size = 10
+        page_count = math.ceil(user_uploads_count / page_size)
+        page_count = max(page_count, 1)
+
+        if page < 1:
+            return redirect("/user/" + user + "/1")
+        if page > page_count:
+            return redirect("/user/" + user + "/" + str(page_count))
+
+        print("app.py's user_page method get finished, rendering user_page.html")
+        return render_template("user_page.html", id = id, user = user, user_picture = user_picture, user_uploads_count = user_uploads_count, user_uploads = forum.user_uploads(id, page, page_size), page = page, page_count = page_count)
+
+    if request.method == "POST":
+        print("app.py's user_page method post requested, for user/" + user + "/" + str(page))
+        check_csrf()
+        '''
+        try:
+            user_picture = picture_request(fieldname = "user_picture")
+        except:
+            flash("Käyttäjäkuvan lataus epäonnistui. Varmista tiedoston koko ja tyyppi.")
+            print("app.py's user_page post except. Flash reorded and redirecting to /user/",session["username"])
+            return redirect("/user/" + session["username"])
+        '''
+        user_picture = picture_request(fieldname = "user_picture")
+
+        print("app.py's user_page picture transfer successful, with picture ", user_picture)
+
+        users.upload_picture(user_id = session["user_id"], user_picture = user_picture)
+
+        flash("Käyttäjäkuvan lataus onnistui.")
+        return redirect("/user/" + session["username"])
+
 
 @app.route("/upload", methods=["GET","POST"])#upload.html sends item_name & csrf_token
 def upload():
@@ -229,8 +291,8 @@ def upload():
         print("app.py's upload method get requested")
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-
-        return render_template("upload.html", classification_keys = classification_keys, characteristic_keys = characteristic_keys, username = session["username"])# show_flashes = False)
+        print("app.py's upload method get data transfer succeeded, rendering template upload.html")
+        return render_template("upload.html", classification_keys = classification_keys, characteristic_keys = characteristic_keys)# show_flashes = False)
     
     if request.method == "POST":  
         print("app.py's upload method post requested.")  
@@ -260,7 +322,8 @@ def upload():
             print("app.py's upload_characteristics failed, flash recorded")
         '''
         flash("Tavaran lisäys onnistui")
-        return redirect("/front_page/" + str(session['username']))
+        print("app.py's upload succeeded, flash recorded. Redirecting to front_page")
+        return redirect("/front_page/")
 
 @app.route("/edit/<item_id>", methods=["GET","POST"])
 def edit(item_id):
@@ -292,7 +355,7 @@ def edit(item_id):
         '''
         item_picture = picture_converter(item_data[1])
         print("app.py's edit method get data retrieve succeeded, classification_keys=",classification_keys,"item_data=",item_data,"item_classifications=",item_classifications,". Now rendering upload.html")
-        return render_template("upload.html", item_id = item_id, item_name = item_data[0], item_picture = item_picture, item_comment = item_data[2], classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics,username = session["username"])# show_flashes = False)
+        return render_template("upload.html", item_id = item_id, item_name = item_data[0], item_picture = item_picture, item_comment = item_data[2], classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics)# show_flashes = False)
 
     if request.method == "POST":
         print("app.py's edit method post requested.")  
@@ -316,7 +379,7 @@ def edit(item_id):
 
         flash("Tavaran muokkaus onnistui")
         print("app.py's edit_item succeeded, flash recorded")
-        return redirect("/front_page/" + str(session['username']))  
+        return redirect("/front_page/")  
 
 @app.route("/remove/<item_id>", methods=["GET","POST"])
 def remove(item_id):
@@ -340,7 +403,7 @@ def remove(item_id):
             forum.remove_item(item_id)
             flash("Tavaran poisto onnistui")
             print("app.py's remove_item succeeded, redirecting to front_page")
-        return redirect("/front_page/" + str(session['username']))  
+        return redirect("/front_page/")  
         
 @app.route("/item/<item_id>", methods=["GET","POST"])
 def item(item_id):
@@ -360,7 +423,7 @@ def item(item_id):
         if owner_id == session["user_id"]: allowed = 1
         else: allowed = None
         print("app.py's item method get data requests done, with item_name =",item_name,", owner_id =",owner_id," item_picture = ",item_picture,", item_comment = ",item_comment,",owner_username = ",owner_username,",available=",available,",allowed=",allowed)
-        return render_template("item.html", item_id = item_id,item_name = item_name,owner_username = owner_username, item_picture = item_picture, item_comment=item_comment,classification_keys = classification_keys, characteristic_keys = characteristic_keys, classifications = classifications, characteristics = characteristics,  allowed = allowed, available=available,username=session["username"])
+        return render_template("item.html", item_id = item_id,item_name = item_name,owner_username = owner_username, item_picture = item_picture, item_comment=item_comment,classification_keys = classification_keys, characteristic_keys = characteristic_keys, classifications = classifications, characteristics = characteristics,  allowed = allowed, available=available)
 
 @app.route("/borrow/<item_id>", methods=["GET","POST"])
 def borrow(item_id):
@@ -368,6 +431,7 @@ def borrow(item_id):
     if check1: return check1
     check2 = borrow_check(item_id)
     if check2: return check2
+
     if request.method == "GET":
         print("app.py's borrow method get requested")
         item_name = forum.item_name(item_id)
@@ -383,7 +447,7 @@ def borrow(item_id):
             forum.borrow_item(item_id,session["user_id"])
             flash("Tavaran lainaus onnistui")
             print("app.py's borrow_item succeeded, redirecting to front_page")
-        return redirect("/front_page/" + str(session['username']))  
+        return redirect("/front_page/")  
 
 @app.route("/return/<item_id>", methods=["GET","POST"])
 def ret (item_id):
@@ -409,7 +473,7 @@ def ret (item_id):
             forum.return_item(item_id)
             flash("Tavaran palautus onnistui")
             print("app.py's return succeeded, redirecting to front_page")
-        return redirect("/front_page/" + str(session['username']))  
+        return redirect("/front_page/")  
 
 @app.route("/search", methods=["GET","POST"])
 def search ():
@@ -418,9 +482,24 @@ def search ():
 
     if request.method == "GET":
         print("app.py's search method get requested")
-        username = session["username"]
-        return render_template("search.html", username = username)
-    
+
+        query = request.args.get("query", "")
+        
+        try: check_query(query)
+        except:
+            flash("VIRHE: varmista hakusanaa")
+            return render_template("search.html", username = username)  
+        
+        page = request.args.get("page", 1, type=int)
+
+        page_size = 10
+
+        results = forum.search(query, page, page_size)
+
+        print("app.py's search finished, with len(results)=",len(results),". Rendering search.html")
+
+        return render_template("search.html", results = results, query = query, page = page, page_size = page_size)
+    '''
     if request.method == "POST":
         print("app.py's search method post requested")
         query = request.form.get("query")
@@ -428,18 +507,21 @@ def search ():
         try: check_query(query)
         except:
             flash("VIRHE: varmista hakusanaa")
-            return redirect("/front_page/" + str(session['username']))  
+            return redirect("/search")  
         
         results = forum.search(query)
         if len(results) == 0: results = None
         username = session["username"]
         print("app.py's query done rendering search.html with results",results)
-        return render_template("search.html", results= results, query = query, username = username)
+        return render_template("search.html", results = results, query = query, username = username)
+    '''
+
+
 
 @app.route("/dev")
 def dev():
     print('/dev visited')
-    check = forum.search("h")
+    check = forum.search("e")
     print("printing forum.search('h')",check)
 
     '''

@@ -1,5 +1,5 @@
 from werkzeug.security import check_password_hash, generate_password_hash
-import db
+import db, app
 def create_user(username, password):
     print("users.py's create_user called")
     password_hash = generate_password_hash(password)
@@ -27,3 +27,18 @@ def username(user_id):
     out = db.query(sql,[user_id])[0][0]
     print("users.py's username success, returning", out)
     return out
+
+def user_id_picture(username):
+    print("users.py's user_data called for username", username)
+    sql = "SELECT user_id, user_picture FROM users WHERE username = ?"
+    user_id, user_picture = db.query(sql, [username])[0]
+    picture_b64 = app.picture_converter(user_picture)
+    out = [user_id, picture_b64]
+    print("users.py's user_data done, returning", out)
+    return out
+
+def upload_picture(user_id, user_picture = None):
+    print("users.py's upload_picture called for user_id", user_id, "picture to be uploaded ", user_picture) 
+    sql = "UPDATE users SET user_picture = ? WHERE user_id = ?"
+    db.execute(sql,[user_picture,user_id])
+    print("forum.py's update_item done")    

@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>Käyttäjä {{ user }}</h2>
+
+{% for message in get_flashed_messages() %}
+<p class = "info">
+  <b>{{ message }}</b>
+</p>
+{% endfor %}
+
+<form action="{{ url_for('search') }}" method="GET">
+  <p>
+    Haku<br/>
+    <input type="text" id="query" name="query" minlength = "1" required> <input type="submit" value="Hae">
+  </p>
+</form>
+
+{% if user_picture %}
+
+  <img src="data:image/png;base64,{{ user_picture }}" width="50"><br />
+  {% set action_url = "/user/" + (user|string) %}
+
+  {% if id == session["user_id"] %}
+    
+    <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
+      <p> 
+        <label for = "user_page_side_text">Muokkaa käyttäjäkuva</label><br />
+        <label for = "user_page_side_text">Lähetä jpg-tiedosto, jonka koko on enintään 100 kt</label><br />
+        <input type="file" name="user_picture" accept=".jpg" />
+      </p>
+      <input type="submit" value="Muokkaa" />
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+    </form>
+  {% endif %}
+
+{% else %}
+
+  {% if id == session["user_id"] %}
+    
+    <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
+      <p> 
+        <label for = "user_page_main_text">Sinulla ei ole käyttäjäkuva sovelluksessa</label> <br />
+        <label for = "user_page_side_text">Lisää käyttäjäkuva</label><br />
+        <label for = "user_page_side_text">Lähetä jpg-tiedosto, jonka koko on enintään 100 kt</label><br />
+        <input type="file" name="user_picture" accept=".jpg" />
+      </p>
+      <input type="submit" value="Lataa kuva" />
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+    </form>
+  {% else %}
+    <p> <label for = "user_page_main_text">Käyttäjällä {{ user }} ei ole käyttäjäkuva</label></p>
+  {% endif %}
+
+{% endif %}
+
+{% if user_uploads_count == 0 %}
+
+  <label for = "user_page_side_text">
+    {% if id == session["user_id"] %}Et{% else %}Käyttäjä {{user}} ei{% endif %} ole lisännyt sovellukseen yhtään tavaraa.
+  </label>
+
+{% else %}
+
+  <label for = "user_page_side_text">
+    {% if id == session["user_id"] %}Olet{% else %}Käyttäjä {{user}} on{% endif %} lisännyt sovellukseen {{user_uploads_count}} {% if user_uploads_count == 1 %}tavara{% else %}tavaraa{% endif %}.
+  </label>
+
+  {% for item in user_uploads %}
+  <p class = "user_page_item_list">
+    <a href="/item/{{ item[0] }}">{{ item[1] }}</a>
+    <a href="/borrow/{{ item[0] }}">Lainaa</a>
+    {% if session['user_id'] == item[2] %}
+      <a href="/edit/{{ item[0] }}">Muokkaa</a>      
+      <a href="/remove/{{ item[0] }}">Poista</a>      
+    {% endif %}<br/>
+    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
+  </p>
+  {% endfor %}
+
+  <p class="user_page_page_nav">
+  {% if page >= 2 %}<a href="{{ url_for('user_page', user = user, page = page - 1) }}">&lt;&lt;</a>{% endif %}
+  Sivu {{ page }}/{{ page_count }}
+  {% if page < page_count %}<a href="{{ url_for('user_page', user = user, page = page + 1) }}">&gt;&gt;</a>{% endif %}
+  </p>
+
+{% endif %}
+
+<a href="/user_borrows/{{ user }}">Katso {% if id == session["user_id"] %}lainaamasi{% else %}käyttäjän {{user}} lainaamat{% endif %} tavarat</a> <br /> <br />
+<a href="/upload">Lisää tavara varastoon</a> <br /> <br />
+<a href="/front_page">Etusivulle</a> <br /> <br />
+<a href="/borrowed">Katso kaikki varastosta lainatut tavarat</a> <br /> <br />
+<a href="/logout">Kirjaudu ulos</a>
+
+
+{% endblock %}

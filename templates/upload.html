@@ -70,7 +70,7 @@ Tavaran nimen on oltava 1-100 merkkiä pitkiä
 
   <p>
     <label for="upload_main_text">Kommentti:</label><br />
-    <textarea name="item_comment" rows = "6" cols = "50">{{comment if comment}}</textarea>
+    <textarea name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea>
     
   </p>
 
@@ -84,8 +84,8 @@ Tavaran nimen on oltava 1-100 merkkiä pitkiä
 </form>
 
 <br />
-<a href="/front_page/{{username}}">Etusivulle</a> <br /> <br />
-<a href="/borrowed">Katso lainatut tavarat</a> <br /> <br />
+<a href="/front_page/">Etusivulle</a> <br /> <br />
+<a href="/borrowed">Katso kaikki varastosta lainatut tavarat</a> <br /> <br />
 <a href="/logout">Kirjaudu ulos</a>
 
 {% endblock %}

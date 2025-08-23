@@ -10,31 +10,49 @@
 </p>
 {% endfor %}
 
-<form action="/search" method="POST">
+<form action="{{ url_for('search') }}" method="GET">
   <p>
     <input type="text" id="query" name="query" value = "{{query if query else '' }}" minlength = "1" required> <input type="submit" value="Hae">
   </p>
 </form>
 
 {% if query %}
-  {% if results %}
+  {% if (results | length) > 0 %}
     {% for result in results %}
-      <br/><a href="/item/{{result[0]}}">{{result[1]}}</a> <br />
-      {% if results[result] | length > 0 %}
-        Haun osumat:<br/>
-        {% for each in results[result] %}
-          {{each}}: {% for text in results[result][each] %}{{text}} {% endfor %}<br/>
-        {% endfor %}<br/>
+      {% if not loop.last %}
+        <br/><a href="/item/{{result[0]}}">{{result[1]}}</a> <br />
+        {% if result[2] %}<img src="data:image/png;base64,{{ result[2] }}" width="50">{% endif %}
+        {% if results[result] | length > 0 %}
+          Haun osumat:<br/>
+          {% for each in results[result] %}
+            {{each}}: {% for text in results[result][each] %}
+            {% if each == "Omistaja"}
+              <a href="/user/{{text}}">{{text}}</a>
+            {% else %}
+              {{text}} 
+            {% endif %}{% endfor %}<br/>
+          {% endfor %}<br/>
+        {% endif %}
       {% endif %}
     {% endfor %}
+
+    {% if (page == 1) and ((results | length) <= page_size) %}
+    {% else %}
+      <p class="search_page_nav">
+        {% if page >= 2 %}<a href="{{ url_for('search', query = query, page = page - 1) }}">&lt;&lt;</a>{% endif %}
+        Sivu {{ page }}
+        {% if (results | length) > page_size %}<a href="{{ url_for('search', query = query, page = page + 1) }}">&gt;&gt;</a>{% endif %}
+      </p>
+    {% endif %}
+
   {% else %}
-    <label for="search_main_text"> Ei ole tuloksia hakusanalla {{query}}.</label>
+    <label for="search_main_text"> Ei ole tuloksia hakusanalla '{{query}}'.</label>
   {% endif %}
 {% endif %}
 
-<a href="/front_page/{{username}}">Etusivulle</a> <br /> <br />
+<a href="/front_page/">Etusivulle</a> <br /> <br />
 <a href="/upload">Lisää tavara varastoon</a> <br /> <br />
-<a href="/borrowed">Katso lainatut tavarat</a> <br /> <br />
+<a href="/borrowed">Katso kaikki varastosta lainatut tavarat</a> <br /> <br />
 <a href="/logout">Kirjaudu ulos</a>
 
 

@@ -2,7 +2,7 @@
 import db, itertools, datetime, users, app, base64
 
 
-def available_items(page, page_size):
+def available_items(page = 1, page_size = 10):
     print("forum.py's available_items called")    
     sql = """SELECT i.item_id, 
                     i.item_name, 
@@ -31,7 +31,7 @@ def available_items_count():
     print("forum.py's available_items_count data transfer succeeded, returning", out)    
     return out    
 
-def borrowed_items():#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture, 4=borrower_id, 5 = borrow_time, 6 = borrower_username
+def borrowed_items(page = 1, page_size = 10):#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture, 4=borrower_id, 5 = borrow_clock, 6 = borrow_day, 7 = borrower_username
     print("forum.py's borrowed_items called")    
     sql = """SELECT i.item_id,  
                     i.item_name, 
@@ -43,14 +43,17 @@ def borrowed_items():#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture
             FROM items i 
             JOIN borrowings b ON i.item_id = b.item_id 
             JOIN users u ON u.user_id = b.borrower_id
+            ORDER BY i.item_id ASC
+            LIMIT ? OFFSET ?
             """
     out = []
-    for data in db.query(sql): 
+    limit = page_size
+    offset = page_size * (page - 1)
+    for data in db.query(sql, [limit, offset]): 
         item_id, item_name, owner_id, item_picture, borrower_id, borrow_time, borrower_username = data
-        picture_b64 = ""
-        if item_picture:
-            picture_b64 = base64.b64encode(item_picture).decode('utf-8')
-        out.append([item_id, item_name, owner_id, picture_b64, borrower_id, borrow_time, borrower_username])
+        borrow_clock, borrow_day = borrow_time.split(' ')
+        picture_b64 = app.picture_converter(item_picture)
+        out.append([item_id, item_name, owner_id, picture_b64, borrower_id, borrow_clock, borrow_day, borrower_username])
 
     print("forum.py's borrowed_items data transfer succeeded, returning", out)    
     return out
@@ -62,6 +65,33 @@ def borrowed_items_count():
     print("forum.py's borrowed_items_count data transfer succeeded, returning", out)    
     return out    
 
+def user_uploads(owner_id, page = 1, page_size = 10):
+    print("forum.py's user_uploads called")    
+    sql = """SELECT item_id, 
+                    item_name, 
+                    owner_id,
+                    item_picture 
+            FROM items 
+            WHERE owner_id = ? 
+            ORDER BY item_id ASC
+            LIMIT ? OFFSET ?
+            """
+    out = []
+    limit = page_size
+    offset = page_size * (page - 1)
+    for data in db.query(sql,[owner_id, limit, offset]):
+        item_id, item_name, owner_id, item_picture = data
+        picture_b64 = app.picture_converter(item_picture)
+        out.append([item_id, item_name, owner_id, picture_b64])
+    print("forum.py's user_uploads data transfer succeeded, returning", out)    
+    return out
+
+def user_uploads_count(owner_id):
+    print("forum.py's user_uploads_count called")
+    sql = "SELECT COUNT(*) FROM items WHERE owner_id = ?"
+    out = db.query(sql, [owner_id])[0][0]
+    print("forum.py's user_uploads_count data transfer succeeded, returning", out)
+    return out
 
 def is_borrowed(item_id):
     print("forum.py's is_borrowed called")
@@ -189,7 +219,7 @@ def item_data(item_id): #0 = item_name, 1 = item_picture, 2 = item_comment
     print("forum.py's item_data done, returning", out)
     return out
 
-def item_data_full(item_id): #0 = item_name, 1= owner_id, 2 = item_picture, 3 = item_comment, 4 = borrowed
+def item_data_full(item_id): #0 = item_name, 1= owner_id, 2 = item_picture, 3 = item_comment
     print("forum.py's item_data_full called, enquiring for item_id",item_id)
     sql = "SELECT item_name, owner_id, item_picture, item_comment FROM items WHERE item_id = ?"
     out = db.query(sql,[item_id])[0]
@@ -236,7 +266,7 @@ def item_characteristics(item_id): #returning a dictionary of the item_character
 def borrow_item(item_id, borrower_id):
     print("forum.py's borrow_item called for item_id",item_id)    
     sql = "INSERT INTO borrowings (item_id, borrower_id, borrow_time) VALUES (?, ?, ?)"
-    borrowings_id, con = db.execute(sql,[item_id,borrower_id,str(datetime.datetime.now())])
+    borrowings_id, con = db.execute(sql,[item_id,borrower_id,str(datetime.datetime.now().strftime("%H:%M %d/%m/%Y"))])
     print("forum.py's borrow_item done, with borrowings_id", borrowings_id)
     return borrowings_id    
 
@@ -254,31 +284,31 @@ def return_item(item_id):
     print("forum.py's return_item succeeded")
 
 #add picture here later!
-def search(query): #printing forum.search('h') {(1, 'kossu'): {'Ominaisuudet': ['alkoholia']}, (2, 'vissy'): {'Luokkitellut': ['sähköiset']}, (4, 'rikki flyygeli'): {'Ominaisuudet': ['huono'], 'Luokkitellut': ['sähköiset']}, (5, 'tuhottu auto'): {'Ominaisuudet': ['ylihuono']}, (9, 'palava mies'): {'Ominaisuudet': ['liha', 'lyhyt']}, (10, 'haha'): {'Kommentti': ['hah???']}, (11, 'heeh'): {'Omistaja': ['haha']}}
+def search(query, page = 1, page_size = 10): #printing forum.search('h') {(1, 'kossu'): {'Ominaisuudet': ['alkoholia']}, (2, 'vissy'): {'Luokkitellut': ['sähköiset']}, (4, 'rikki flyygeli'): {'Ominaisuudet': ['huono'], 'Luokkitellut': ['sähköiset']}, (5, 'tuhottu auto'): {'Ominaisuudet': ['ylihuono']}, (9, 'palava mies'): {'Ominaisuudet': ['liha', 'lyhyt']}, (10, 'haha'): {'Kommentti': ['hah???']}, (11, 'heeh'): {'Omistaja': ['haha']}}
     print("forum.py's search called for query",query)
     sql = """WITH matches AS (
-        SELECT i.item_id, i.item_name, 'Omistaja' AS match_origin, u.username AS match_value
+        SELECT i.item_id, i.item_name, i.item_picture, 'Omistaja' AS match_origin, u.username AS match_value
         FROM users u
         JOIN items i ON u.user_id = i.owner_id
         WHERE u.username LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, 'Tavaran nimi' AS match_origin, i.item_name AS match_value 
+        SELECT i.item_id, i.item_name, i.item_picture, 'Tavaran nimi' AS match_origin, i.item_name AS match_value 
         FROM users u
         JOIN items i ON u.user_id = i.owner_id
         WHERE i.item_name LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, 'Kommentti' AS match_origin, i.item_comment AS match_value
+        SELECT i.item_id, i.item_name, i.item_picture, 'Kommentti' AS match_origin, i.item_comment AS match_value
         FROM users u
         JOIN items i ON u.user_id = i.owner_id
         WHERE i.item_comment LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, 'Ominaisuudet' AS match_origin, c.characteristic_value AS match_value
+        SELECT i.item_id, i.item_name, i.item_picture, 'Ominaisuudet' AS match_origin, c.characteristic_value AS match_value
         FROM users u
         JOIN items i ON u.user_id = i.owner_id
         JOIN characteristics c ON i.item_id = c.item_id
@@ -286,37 +316,51 @@ def search(query): #printing forum.search('h') {(1, 'kossu'): {'Ominaisuudet': [
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, 'Luokitellut' AS match_origin, clk.classification_name AS match_value
+        SELECT i.item_id, i.item_name, i.item_picture, 'Luokitellut' AS match_origin, clk.classification_name AS match_value
         FROM users u
         JOIN items i ON u.user_id = i.owner_id
         JOIN classifications cl ON i.item_id = cl.item_id
         JOIN classification_keys clk ON cl.classification_keys_id = clk.classification_keys_id
         WHERE clk.classification_name LIKE ?
-        )
-        SELECT * FROM matches ORDER BY item_id;"""
+    ),
+    first_ids AS (
+        SELECT DISTINCT item_id
+        FROM matches
+        ORDER BY item_id ASC
+        LIMIT ? OFFSET ?
+    )
+    SELECT m.*
+    FROM matches m
+    JOIN first_ids f ON m.item_id = f.item_id
+    ORDER BY m.item_id ASC;
+    """
     que = "%" + query + "%"
-    results = db.query(sql, [que,que,que,que,que])
+    limit = page_size + 1
+    offset = page_size * (page - 1)
+    results = db.query(sql, [que,que,que,que,que,limit,offset])
     out = {}
     for result in results:
-        item_id = result[0]; item_name = result[1]; match_origin = result[2]; match_value = result[3]
-        if (item_id, item_name) not in out: #if the item_id not yet in out
-            print("(item_id, item_name)",(item_id, item_name)," not yet in out, out now",out)
-            out[(item_id,item_name)] = {}
-            if match_origin != "Tavaran nimi": out[(item_id,item_name)].update({match_origin:[match_value]})
+        item_id = result[0]; item_name = result[1]; item_picture = result[2]; match_origin = result[3]; match_value = result[4]
+        picture_b64 = app.picture_converter(item_picture)
+        key = (item_id, item_name, picture_b64)
+        if key not in out: #if the item_id not yet in out
+            print("(item_id, item_name, picture_b64)",key," not yet in out, out now",out)
+            out[key] = {}
+            if match_origin != "Tavaran nimi": out[key].update({match_origin:[match_value]})
 
             print("line 269 done, out now",out)
         else: #if the item_id already in out
-            print("(item_id, item_name)",(item_id, item_name)," already in out, out now",out)
+            print("(item_id, item_name, picture_b64)",key," already in out, out now",out)
             if match_origin == "Tavaran nimi":
                 print("no need to record, continue!")
                 continue
-            if match_origin not in out[(item_id,item_name)]: #if the match_origin not yet in 
+            if match_origin not in out[key]: #if the match_origin not yet in 
                 print("match_origin not yet in, out now",out)
-                out[(item_id,item_name)].update({match_origin:[match_value]})
+                out[key].update({match_origin:[match_value]})
                 print("line275 done, out now",out)
             else: #if the match_origin already in
                 print("match origin already in, out now", out)
-                out[(item_id,item_name)][match_origin].append(match_value)
+                out[key][match_origin].append(match_value)
                 print("line279 done, out now",out)
 
     print("forum.py's search succeeded, returning",out)
