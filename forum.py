@@ -67,22 +67,22 @@ def borrowed_items_count():
 
 def user_uploads(owner_id, page = 1, page_size = 10):
     print("forum.py's user_uploads called")    
-    sql = """SELECT item_id, 
-                    item_name, 
-                    owner_id,
-                    item_picture 
-            FROM items 
-            WHERE owner_id = ? 
-            ORDER BY item_id ASC
-            LIMIT ? OFFSET ?
-            """
+    sql = """SELECT i.item_id,
+                    i.item_name,
+                    i.owner_id,
+                    i.item_picture,
+                    NOT EXISTS (SELECT 1 FROM borrowings b WHERE b.item_id = i.item_id) AS has_borrowing
+            FROM items i
+            WHERE i.owner_id = ?
+            ORDER BY i.item_id ASC
+            LIMIT ? OFFSET ?;"""
     out = []
     limit = page_size
     offset = page_size * (page - 1)
     for data in db.query(sql,[owner_id, limit, offset]):
-        item_id, item_name, owner_id, item_picture = data
+        item_id, item_name, owner_id, item_picture, available = data
         picture_b64 = app.picture_converter(item_picture)
-        out.append([item_id, item_name, owner_id, picture_b64])
+        out.append([item_id, item_name, owner_id, picture_b64, available])
     print("forum.py's user_uploads data transfer succeeded, returning", out)    
     return out
 
@@ -94,44 +94,59 @@ def user_uploads_count(owner_id):
     return out
 
 def is_borrowed(item_id):
-    print("forum.py's is_borrowed called")
+    print("forum.py's is_borrowed called for item_id", item_id)
     sql = "SELECT EXISTS (SELECT 1 FROM borrowings WHERE item_id = ?) AS has_borrowing;"
     if db.query(sql,[item_id])[0][0] == 1: print("forum.py's is_borrowed query succeeded, returning 1"); return 1
     print("forum.py's is_borrowed query succeeded, returning None")
     return None
 
-def insert_item(item_name, owner_id, item_picture = None, item_comment = None, con = None):
+def borrower_username_time(item_id):
+    print("forum.py's borrower_username_id called for item_id", item_id)
+    sql = """SELECT u.username,
+                    b.borrow_time
+            FROM borrowings b
+            JOIN users u ON u.user_id = b.borrower_id
+            WHERE b.item_id = ?"""
+    try:
+        out = db.query(sql,[item_id])[0]
+        print("forum.py's borrower_username_id query succeeded, returning",out)
+        return out
+    except:
+        print("forum.py's borrower_username_id query succeeded, returning None")
+        return None
+
+def insert_item(item_name, owner_id, item_location, item_picture = None, item_comment = None, con = None):
     print("forum.py's insert_item called")
-    sql = "INSERT INTO items (item_name, owner_id, item_picture, item_comment) VALUES (?, ?, ?, ?)"
-    item_id, con = db.execute(sql,[item_name,owner_id,item_picture, item_comment],con)
+    sql = "INSERT INTO items (item_name, owner_id, item_location, item_picture, item_comment) VALUES (?, ?, ?, ?, ?)"
+    item_id, con = db.execute(sql,[item_name,owner_id,item_location,item_picture, item_comment],con)
     print("forum.py's insert_item succeeded")
     return item_id, con
 
-def insert_classifications(item_id, classifications = [], con = None):
+def insert_classifications(item_id, item_classifications = [], con = None):
     print("forum.py's insert_classifications called")
     sql = "INSERT INTO classifications (item_id, classification_keys_id) VALUES (?, ?)"
-    for data in classifications:    
+    for data in item_classifications:    
         db.execute(sql,[item_id,data], con)
         print("forum.py's insert_classifications upload onto classifications table for classification_key_id", data," success")
     print("forum.py's insert_classifications done")
 
-def insert_characteristics(item_id, characteristics = {}, con = None):
+def insert_characteristics(item_id, item_characteristics = {}, con = None):
     print("forum.py's insert_characteristics called")
     sql = "INSERT INTO characteristics (item_id, characteristic_keys_id, characteristic_value) VALUES (?, ?, ?)"
-    for data in characteristics:
-        db.execute(sql, [item_id,data,characteristics[data]], con)          
-        print("forum.py's insert_characteristics for, upload onto characteristics table for data",data,",",characteristics[data]," succeeded")
+    for data in item_characteristics:
+        db.execute(sql, [item_id,data,item_characteristics[data]], con)          
+        print("forum.py's insert_characteristics for, upload onto characteristics table for data",data,",",item_characteristics[data]," succeeded")
     print("forum.py's insert_characteristics done")
 
-def upload_item(item_name, owner_id, item_picture = None, item_comment = None, classifications = [], characteristics = {}):
+def upload_item(item_name, owner_id, item_location, item_picture = None, item_comment = None, item_classifications = [], item_characteristics = {}):
     print("forum.py's upload_item called")
 
     con = db.get_connection()
     print("forum.py's upload_item connection made")
 
-    item_id, con2 = insert_item(item_name, owner_id, item_picture, item_comment, con)
-    insert_classifications(item_id, classifications, con)
-    insert_characteristics(item_id, characteristics, con)
+    item_id, con2 = insert_item(item_name=item_name, owner_id=owner_id, item_location=item_location, item_picture=item_picture, item_comment=item_comment, con=con)
+    insert_classifications(item_id=item_id, item_classifications=item_classifications, con=con)
+    insert_characteristics(item_id=item_id, item_characteristics=item_characteristics, con=con)
  
     con.commit()
     '''
@@ -156,10 +171,10 @@ def upload_item(item_name, owner_id, item_picture = None, item_comment = None, c
     print("forum.py's upload_item done, returning item_id =",item_id)
     return item_id
 
-def update_item(item_id, item_name, item_picture = None, item_comment = None, con = None):
+def update_item(item_id, item_name,item_location, item_picture = None, item_comment = None, con = None):
     print("forum.py's update_item called")
-    sql = "UPDATE items SET item_name = ?, item_picture = ?, item_comment = ? WHERE item_id = ?"
-    db.execute(sql,[item_name,item_picture,item_comment,item_id], con)
+    sql = "UPDATE items SET item_name = ?, item_location = ?, item_picture = ?, item_comment = ? WHERE item_id = ?"
+    db.execute(sql,[item_name,item_location,item_picture,item_comment,item_id], con)
     print("forum.py's update_item done")
 
 
@@ -176,15 +191,15 @@ def delete_characteristics(item_id,con = None):
     print("forum.py's delete_classifications done")
 
 
-def edit_item(item_id, item_name, item_picture = None, item_comment = None, classifications = [], characteristics = {}):
+def edit_item(item_id, item_name, item_location, item_picture = None, item_comment = None, item_classifications = [], item_characteristics = {}):
     print("forum.py's edit_item called")
 
     con = db.get_connection()
-    delete_classifications(item_id, con)
-    delete_characteristics(item_id,con)
-    update_item(item_id, item_name, item_picture , item_comment, con)
-    insert_classifications(item_id, classifications, con)
-    insert_characteristics(item_id, characteristics, con)
+    delete_classifications(item_id=item_id, con=con)
+    delete_characteristics(item_id=item_id,con=con)
+    update_item(item_id=item_id, item_name=item_name,item_location = item_location, item_picture=item_picture, item_comment=item_comment, con=con)
+    insert_classifications(item_id=item_id, item_classifications=item_classifications, con=con)
+    insert_characteristics(item_id=item_id, item_characteristics=item_characteristics, con=con)
     con.commit()
 
     print("forum.py's edit_item done")
@@ -212,16 +227,16 @@ def characteristic_keys(): #returns dictionary of the id: characteristic_name
     return out
 
 
-def item_data(item_id): #0 = item_name, 1 = item_picture, 2 = item_comment
+def item_name_location_picture_comment(item_id): #0 = item_name, 1= item_location, 2 = item_picture, 3 = item_comment
     print("forum.py's item_data called, enquiring for item_id",item_id)    
-    sql = "SELECT item_name, item_picture, item_comment FROM items WHERE item_id = ?"
+    sql = "SELECT item_name, item_location, item_picture, item_comment FROM items WHERE item_id = ?"
     out = db.query(sql,[item_id])[0]
     print("forum.py's item_data done, returning", out)
     return out
 
-def item_data_full(item_id): #0 = item_name, 1= owner_id, 2 = item_picture, 3 = item_comment
+def item_name_ownerid_location_picture_comment(item_id): #0 = item_name, 1= owner_id, 2 = item_location, 3 = item_picture, 4 = item_comment
     print("forum.py's item_data_full called, enquiring for item_id",item_id)
-    sql = "SELECT item_name, owner_id, item_picture, item_comment FROM items WHERE item_id = ?"
+    sql = "SELECT item_name, owner_id, item_location, item_picture, item_comment FROM items WHERE item_id = ?"
     out = db.query(sql,[item_id])[0]
     print("forum.py's item_data_full done, returning", out)
     return out
@@ -247,7 +262,14 @@ def item_name(item_id):
     print("forum.py's item_name done, returning", out)
     return out
 
-def item_classifications(item_id): #returns list of integers
+def item_name_picture(item_id):
+    print("forum.py's item_name_picture called,enquiring for item_id",item_id)    
+    sql = "SELECT item_name, item_picture FROM items WHERE item_id = ?"
+    out = db.query(sql,[item_id])[0]
+    print("forum.py's item_name_picture done, returning", out)
+    return out    
+
+def item_classifications(item_id): #returns list of integers such as ['2', '6', '8']
     print("forum.py's item_classifications called")
     sql = "SELECT classification_keys_id FROM classifications WHERE item_id = ?"
     out = []
@@ -255,7 +277,7 @@ def item_classifications(item_id): #returns list of integers
     print("forum.py's item_classifications done, returning", out)
     return out
 
-def item_characteristics(item_id): #returning a dictionary of the item_characteristics
+def item_characteristics(item_id): #returning a dictionary of the item_characteristics, data produced such as {2: 'ff', 5: 'efefe'}
     print("forum.py's item_characteristics called")
     sql = "SELECT characteristic_keys_id, characteristic_value FROM characteristics WHERE item_id = ?"
     out = {}
@@ -283,8 +305,18 @@ def return_item(item_id):
     db.execute(sql,[item_id])
     print("forum.py's return_item succeeded")
 
-#add picture here later!
-def search(query, page = 1, page_size = 10): #printing forum.search('h') {(1, 'kossu'): {'Ominaisuudet': ['alkoholia']}, (2, 'vissy'): {'Luokkitellut': ['sähköiset']}, (4, 'rikki flyygeli'): {'Ominaisuudet': ['huono'], 'Luokkitellut': ['sähköiset']}, (5, 'tuhottu auto'): {'Ominaisuudet': ['ylihuono']}, (9, 'palava mies'): {'Ominaisuudet': ['liha', 'lyhyt']}, (10, 'haha'): {'Kommentti': ['hah???']}, (11, 'heeh'): {'Omistaja': ['haha']}}
+def search(query, page = 1, page_size = 10): 
+    '''
+    form of the output
+    [
+    (
+    (item_id, item_name, item_picture),{match_origin:[match_value]}
+    ),
+    (
+    (item_id, item_name, item_picture),{match_origin:[match_value]}
+    ), ...
+    ]
+    '''
     print("forum.py's search called for query",query)
     sql = """WITH matches AS (
         SELECT i.item_id, i.item_name, i.item_picture, 'Omistaja' AS match_origin, u.username AS match_value
@@ -298,6 +330,13 @@ def search(query, page = 1, page_size = 10): #printing forum.search('h') {(1, 'k
         FROM users u
         JOIN items i ON u.user_id = i.owner_id
         WHERE i.item_name LIKE ?
+
+        UNION ALL
+
+        SELECT i.item_id, i.item_name, i.item_picture, 'Sijainti' AS match_origin, i.item_location AS match_value 
+        FROM users u
+        JOIN items i ON u.user_id = i.owner_id
+        WHERE i.item_location LIKE ?
 
         UNION ALL
 
@@ -337,7 +376,7 @@ def search(query, page = 1, page_size = 10): #printing forum.search('h') {(1, 'k
     que = "%" + query + "%"
     limit = page_size + 1
     offset = page_size * (page - 1)
-    results = db.query(sql, [que,que,que,que,que,limit,offset])
+    results = db.query(sql, [que,que,que,que,que,que,limit,offset])
     out = {}
     for result in results:
         item_id = result[0]; item_name = result[1]; item_picture = result[2]; match_origin = result[3]; match_value = result[4]
@@ -362,11 +401,11 @@ def search(query, page = 1, page_size = 10): #printing forum.search('h') {(1, 'k
                 print("match origin already in, out now", out)
                 out[key][match_origin].append(match_value)
                 print("line279 done, out now",out)
-
+    out = list(out.items())
     print("forum.py's search succeeded, returning",out)
     return out
 
-
+'''
 def table_columns(table_name): ##############is this needed?
     print("forum.py's table_data",table_name," called")    
     sql = "SELECT name FROM PRAGMA_TABLE_INFO (?)"
@@ -377,7 +416,7 @@ def table_columns(table_name): ##############is this needed?
 
 
 
-'''
+
 result should be 
 {1: {'Tavaran nimi': 'kossu', 'Ominaisuudet': ['alkoholia']}, 2: {'Tavaran nimi': 'vissy', 'Luokkitellut': ['sähköiset']}, 4: {'Tavaran nimi': 'rikki flyygeli', 'Ominaisuudet': ['huono'], 'Luokkitellut': ['sähköiset']}, 5: {'Tavaran nimi': 'tuhottu auto', 'Ominaisuudet': ['ylihuono']}, 9: {'Tavaran nimi': 'palava mies', 'Ominaisuudet': ['liha', 'lyhyt']}, 10: {'Tavaran nimi': 'haha', 'Kommentti': ['hah???']}, 11: {'Tavaran nimi': 'heeh', 'Omistaja': ['haha']}}
 dev printing forum.search('h')[0][0], value is 1

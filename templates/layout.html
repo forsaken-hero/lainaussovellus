@@ -2,10 +2,67 @@
 <html>
 
 <head>
-  <title>IiziLaina</title>
-  <!--<link rel="stylesheet" href="/static/main.css">-->
+  <title>IiziLaina - {% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/main.css">
 </head>
 
-<body>{% block content %}{% endblock %}</body>
+<body>
+  {% if session.user_id %}
+  <div class="nav">
+    <nav>
+      <ul>
+          <li id="title">IiziLaina</li>
+          <li id="subtitle">laina iizisti!</li>
+          <li>
+            <form action="{{ url_for('search') }}" method="GET">
+              <input type="text" name="query" value="{{ request.args.get('query', '') }}" placeholder="Hae..." minlength="1" required>
+              <input type="submit" value="Hae">
+            </form>
+          </li>
+          <li><a href="/front_page/">Etusivu</a></li>
+          <li><a href="/upload">Lisää tavara</a></li>
+          <li><a href="/user_borrowings/{{session['username']}}">Lainaukseni</a></li>
+          <li><a href="/borrowings">Lainatut tavarat</a></li>
+          <li><a href="/user/{{session['username']}}">Käyttäjätiedot</a></li>
+          <li><a href="/logout">Kirjaudu ulos</a></li>
+      </ul>
+    </nav>
+  </div>
+  
+  <div class="page">
+    <div class="header">
+      <h2>{% block header %}{% endblock %}</h2>
+    </div>
+    <hr>
+    <div class="flashes">
+      {% for message in get_flashed_messages() %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
 
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  {% else %}
+  <div class="page_out">
+    <div class="header_1_out">
+      <h1>{% block header_1_out %}{% endblock %}</h1>
+    </div>
+    <hr>
+    <div class="header_2_out">
+      <h2>{% block header_2_out %}{% endblock %}</h2>
+    </div>
+
+    <div class="content_out">
+      <div class="flashes_out">
+        {% for message in get_flashed_messages() %}
+          <p>{{ message }}</p>
+        {% endfor %}
+      </div>  
+      {% block content_out %}{% endblock %}
+    </div>
+  </div>
+  {% endif %}
+</body>
 </html>

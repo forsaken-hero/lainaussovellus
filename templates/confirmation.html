@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}
+  {% if ret %}Palautusvahvistus
+  {% elif remove %}Poistovahvistus
+  {% else %}Lainausvahvistus
+  {% endif %}
+{% endblock %}
+{% block header %}
+  {% if ret %}Palauta 
+  {% elif remove %}Poista 
+  {% else %}Lainaa 
+  {% endif %}
+  {{item_name}}
+{% endblock %}
+
+{% block content %}
+
+<p>
+  Haluatko {% if ret %}palauttaa{% elif remove %}poistaa{% else %}lainata{% endif %} {{item_name}}?
+</p>
+{% if item_picture %}  <img src="data:image/png;base64,{{ item_picture }}" width="50"><br />{% endif %}
+
+{% set action_url = ("/return/" if ret else ("/remove/" if remove else "/borrow/")) ~ item_id %}
+
+<form method="POST" action="{{ action_url }}">
+  <input type="submit" name="choice" value="Kyllä">
+  <input type="submit" name="choice" value="Ei">
+  <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+</form>
+{% endblock %}

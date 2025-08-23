@@ -1,15 +1,10 @@
 {% extends "layout.html" %}
 
-{% block content %}
-<h2>
-  Kirjaudu sisään
-</h2>
+{% block title %}Kirjaudu sisään{% endblock %}
+{% block header_1_out %}IiziLaina{% endblock %}
+{% block header_2_out %}Kirjaudu sisään{% endblock %}
 
-{% for message in get_flashed_messages() %}
-<p class = "info">
-  <b>{{ message }}</b>
-</p>
-{% endfor %}
+{% block content_out %}
 
 <form action="/" method="post">
   <p>

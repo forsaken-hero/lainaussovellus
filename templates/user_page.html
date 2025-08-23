@@ -1,22 +1,9 @@
 {% extends "layout.html" %}
+{% block title %}{% if id == session["user_id"] %}Omat Tiedot{% else %}Käyttäjä {{ user }}{% endif %}{% endblock %}
+{% block header %}{% if id == session["user_id"] %}Omat Tiedot{% else %}Käyttäjä {{ user }}{% endif %}{% endblock %}
 
 {% block content %}
-
-<h2>Käyttäjä {{ user }}</h2>
-
-{% for message in get_flashed_messages() %}
-<p class = "info">
-  <b>{{ message }}</b>
-</p>
-{% endfor %}
-
-<form action="{{ url_for('search') }}" method="GET">
-  <p>
-    Haku<br/>
-    <input type="text" id="query" name="query" minlength = "1" required> <input type="submit" value="Hae">
-  </p>
-</form>
-
+{% if id == session["user_id"] %}Käyttäjätunnus: {{session["username"]}}<br />{% endif %}
 {% if user_picture %}
 
   <img src="data:image/png;base64,{{ user_picture }}" width="50"><br />
@@ -70,7 +57,7 @@
   {% for item in user_uploads %}
   <p class = "user_page_item_list">
     <a href="/item/{{ item[0] }}">{{ item[1] }}</a>
-    <a href="/borrow/{{ item[0] }}">Lainaa</a>
+    {% if item[4] ==1 %}<a href="/borrow/{{ item[0] }}">Lainaa</a>{% endif %}
     {% if session['user_id'] == item[2] %}
       <a href="/edit/{{ item[0] }}">Muokkaa</a>      
       <a href="/remove/{{ item[0] }}">Poista</a>      
@@ -87,11 +74,6 @@
 
 {% endif %}
 
-<a href="/user_borrows/{{ user }}">Katso {% if id == session["user_id"] %}lainaamasi{% else %}käyttäjän {{user}} lainaamat{% endif %} tavarat</a> <br /> <br />
-<a href="/upload">Lisää tavara varastoon</a> <br /> <br />
-<a href="/front_page">Etusivulle</a> <br /> <br />
-<a href="/borrowed">Katso kaikki varastosta lainatut tavarat</a> <br /> <br />
-<a href="/logout">Kirjaudu ulos</a>
-
+<a href="/user_borrows/{{ user }}">Katso {% if id == session["user_id"] %}lainaamasi{% else %}käyttäjän {{user}} lainaamat{% endif %} tavarat</a>
 
 {% endblock %}

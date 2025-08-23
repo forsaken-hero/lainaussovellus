@@ -1,20 +1,9 @@
 {% extends "layout.html" %}
+{% block title %}{% if item_id %}Muokkaa Tavaran Tiedot{% else %}Lisää Tavara{% endif %}{% endblock %}
+{% block header %}{% if item_id %}Muokkaa Tavaran Tiedot{% else %}Lisää Tavara{% endif %}{% endblock %}
 
 {% block content %}
-
-{% if item_id %}
-  <h2>Muokkaa Tavaran Tiedot</h2>
-{% else %}
-  <h2>Lisää Tavara</h2>
-{% endif %}
-
-{% for message in get_flashed_messages() %}
-<p class = "info">
-  <b>{{ message }}</b>
-</p>
-{% endfor %}
-
-Tavaran nimen on oltava 1-100 merkkiä pitkiä
+Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
 {% set action_url = "/edit/" + (item_id|string) if item_id else "/upload" %}
 <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
 
@@ -27,12 +16,12 @@ Tavaran nimen on oltava 1-100 merkkiä pitkiä
       minlength = "1" 
       maxlength="100" 
       required 
-    />
+    />*
   </p>
 
   <p>
-    {% if picture %}
-      <img src="data:image/jpg;base64,{{ picture }}" width="150"> <br />
+    {% if item_picture %}
+      <img src="data:image/jpg;base64,{{ item_picture }}" width="150"> <br />
       <label for="upload_main_text">Muokkaa kuva</label><br />
     {% else %}
       <label for="upload_main_text">Lisää kuva</label><br />
@@ -43,12 +32,24 @@ Tavaran nimen on oltava 1-100 merkkiä pitkiä
   </p>
 
   <p>
+    <label for="upload_main_text">Säilytys sijainti:</label><br />
+    <input type="text" 
+      id="item_location" 
+      name="item_location" 
+      value="{{ item_location if item_location else '' }}" 
+      minlength = "1" 
+      maxlength="100" 
+      required 
+    />*
+  </p>
+
+  <p>
     <label for="upload_main_text">Luokkitelut:</label><br />
     {% for classification_key in classification_keys %}
       <input type="checkbox"
        id="classification_checkbox_{{ classification_key }}"
        name="classification_checkbox[]"
-       value="{{ classification_key }}"
+       value= "{{ classification_key }}"
        {% if classification_key|int in item_classifications %}checked{% endif %}
       />
       <label for="classification_checkbox"> {{ classification_keys[classification_key] }}</label><br>
@@ -82,10 +83,5 @@ Tavaran nimen on oltava 1-100 merkkiä pitkiä
 
   <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
 </form>
-
-<br />
-<a href="/front_page/">Etusivulle</a> <br /> <br />
-<a href="/borrowed">Katso kaikki varastosta lainatut tavarat</a> <br /> <br />
-<a href="/logout">Kirjaudu ulos</a>
 
 {% endblock %}

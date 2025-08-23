@@ -1,14 +1,10 @@
 {% extends "layout.html" %}
+{% block title %}Luo tunnus{% endblock %}
+{% block header_1_out %}IiziLaina{% endblock %}
+{% block header_2_out %}Luo tunnus{% endblock %}
 
-{% block content %}
+{% block content_out %}
 
-<h2>Luo tunnus</h2>
-
-{% for message in get_flashed_messages() %}
-<p class = "info">
-  <b>{{ message }}</b>
-</p>
-{% endfor %}
 Käyttäjätunnuksen ja salasanan on oltava 3-20 merkkiä pitkiä
 <form action="/register" method="post">
   <p>

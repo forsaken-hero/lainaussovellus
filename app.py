@@ -1,6 +1,7 @@
 import math, secrets, sqlite3, db, config, forum, users, markupsafe, base64
 from flask import Flask, abort, flash, make_response, redirect, render_template, request, session
 from werkzeug.exceptions import Forbidden
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
@@ -11,7 +12,7 @@ def require_login():
     if "user_id" not in session:
         raise Forbidden("Sinulla ei ole oikeus tähän toimintaan.")
 
-def check_csrf(): #later can be made to render a csrf failure html?
+def check_csrf():
     print("app.py's check_csrf called")
     print("printing request.form['csrf_token'], result is", request.form["csrf_token"])
     
@@ -216,8 +217,8 @@ def front_page(page = 1):
         print("app.py's front_page method get finished, rendering front_page.html")
         return render_template("front_page.html", available_items_count = available_items_count, username = session['username'], available_items = forum.available_items(page, page_size), page = page, page_count = page_count)
 
-@app.route("/borrowed/", methods=["GET","POST"])
-@app.route("/borrowed/<int:page>", methods=["GET","POST"])
+@app.route("/borrowings/", methods=["GET","POST"])
+@app.route("/borrowings/<int:page>", methods=["GET","POST"])
 def borrowed(page = 1):
     check1 = login_check()
     if check1: return check1
@@ -232,12 +233,12 @@ def borrowed(page = 1):
 
 
         if page < 1:
-            return redirect("/borrowed/1")
+            return redirect("/borrowings/1")
         if page > page_count:
-            return redirect("/borrowed/" + str(page_count))
+            return redirect("/borrowings/" + str(page_count))
 
         print("app.py's borrowed method get finished, rendering borrowed.html")
-        return render_template("borrowed.html", borrowed_items = forum.borrowed_items(page, page_size), borrowed_items_count = borrowed_items_count, page = page, page_count = page_count)
+        return render_template("borrowings.html", borrowed_items = forum.borrowed_items(page, page_size), borrowed_items_count = borrowed_items_count, page = page, page_count = page_count)
 
 @app.route("/user/<user>", methods=["GET","POST"])
 @app.route("/user/<user>/<int:page>", methods=["GET","POST"])
@@ -265,15 +266,13 @@ def user_page(user, page = 1):
     if request.method == "POST":
         print("app.py's user_page method post requested, for user/" + user + "/" + str(page))
         check_csrf()
-        '''
+        
         try:
             user_picture = picture_request(fieldname = "user_picture")
         except:
             flash("Käyttäjäkuvan lataus epäonnistui. Varmista tiedoston koko ja tyyppi.")
             print("app.py's user_page post except. Flash reorded and redirecting to /user/",session["username"])
             return redirect("/user/" + session["username"])
-        '''
-        user_picture = picture_request(fieldname = "user_picture")
 
         print("app.py's user_page picture transfer successful, with picture ", user_picture)
 
@@ -301,26 +300,25 @@ def upload():
         item_name = request.form["item_name"]; length_check(item_name,1,100)
         print("app.py's upload item_name transfer successful, with item_name = ", item_name)
 
-        item_picture = picture_request("item_picture")
-        print("app.py's upload picture transfer successful, with picture ", item_picture)
-        classifications = request.form.getlist("classification_checkbox[]")
-        print("app.py's upload classifcation_list transfer successful, with item_classifications = ", classifications)
-        characteristics = characteristics_request()
-        print("app.py's upload characteristics_request transfer successful, with item_characteristics = ", characteristics)
+        item_location = request.form["item_location"]; length_check(item_location,1,100)
+        print("app.py's upload item_name transfer successful, with item_name = ", item_location)
+
+        item_classifications = [int(x) for x in request.form.getlist('classification_checkbox[]')]
+        print("app.py's upload classifcations transfer successful, with item_classifications = ", item_classifications) #data produced such as item_classifications =  ['2', '6', '8']
+        item_characteristics = characteristics_request()
+        print("app.py's upload characteristics_request transfer successful, with item_characteristics = ", item_characteristics)#data produced such as item_characteristics =  {2: 'ff', 5: 'efefe'}
         item_comment = request.form.get("item_comment")
-
-
-        forum.upload_item(item_name = item_name, owner_id = session["user_id"],item_picture = item_picture, item_comment = item_comment, classifications = classifications, characteristics = characteristics)
-        '''     
+        
         try:
-            forum.upload_item(item_name = item_name, owner_id = session["user_id"],item_picture = item_picture, item_comment = item_comment, classifications = classifications, characteristics = characteristics)
-            flash("Tavaran lisäys onnistui")
-            print("app.py's upload_characteristics succeeded, flash recorded")
-
+            item_picture = picture_request("item_picture")
         except:
-            flash("Jokin meni pieleen, tavaran lisäys epäonnistui")
-            print("app.py's upload_characteristics failed, flash recorded")
-        '''
+            flash("Kuvan lataus epäonnistui. Varmista kuvan koko ja tyyppi.")
+            return render_template("upload.html", item_name = item_name, item_location = item_location, item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
+
+        print("app.py's upload picture transfer successful, with picture ", item_picture)
+
+        forum.upload_item(item_name = item_name, owner_id = session["user_id"],item_location = item_location, item_picture = item_picture, item_comment = item_comment, item_classifications = item_classifications, item_characteristics = item_characteristics)
+
         flash("Tavaran lisäys onnistui")
         print("app.py's upload succeeded, flash recorded. Redirecting to front_page")
         return redirect("/front_page/")
@@ -337,7 +335,7 @@ def edit(item_id):
         
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-        item_data = forum.item_data(item_id)
+        item_name_location_picture_comment = forum.item_name_location_picture_comment(item_id)
         item_classifications = forum.item_classifications(item_id)
         item_characteristics = forum.item_characteristics(item_id)
         '''
@@ -353,9 +351,9 @@ def edit(item_id):
         print('..................................................')
         ##################################
         '''
-        item_picture = picture_converter(item_data[1])
-        print("app.py's edit method get data retrieve succeeded, classification_keys=",classification_keys,"item_data=",item_data,"item_classifications=",item_classifications,". Now rendering upload.html")
-        return render_template("upload.html", item_id = item_id, item_name = item_data[0], item_picture = item_picture, item_comment = item_data[2], classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics)# show_flashes = False)
+        item_picture = picture_converter(item_name_location_picture_comment[2])
+        print("app.py's edit method get data retrieve succeeded, classification_keys=",classification_keys,"item_name_location_picture_comment=",item_name_location_picture_comment,"item_classifications=",item_classifications,". Now rendering upload.html")
+        return render_template("upload.html", item_id = item_id, item_name = item_name_location_picture_comment[0],item_location = item_name_location_picture_comment[1], item_picture = item_picture, item_comment = item_name_location_picture_comment[3], classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics)
 
     if request.method == "POST":
         print("app.py's edit method post requested.")  
@@ -363,19 +361,30 @@ def edit(item_id):
 
         item_name = request.form["item_name"]; length_check(item_name,1,100)
         print("app.py's edit item_name transfer successful, with item_name = ", item_name)
-        item_picture = picture_request("item_picture")
+        item_location = request.form["item_location"]; length_check(item_name,1,100)
+        print("app.py's edit item_location transfer successful, with item_location = ", item_location)
+        item_classifications = [int(x) for x in request.form.getlist('classification_checkbox[]')]
+        print("app.py's edit classifcations transfer successful, with item_classifications = ", item_classifications)
+
+        item_characteristics = characteristics_request()
+        print("app.py's edit ccharacteristics transfer successful, with characteristics = ", item_characteristics)
+        item_comment = request.form.get("item_comment")
+        
+        try:
+            item_picture = picture_request("item_picture")
+        except:
+            flash("Kuvan lataus epäonnistui. Varmista kuvan koko ja tyyppi.")
+            return render_template("upload.html", item_id = item_id, item_name = item_name, item_location = item_location,item_picture = picture_converter(forum.item_picture(item_id)), item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
+
+        
         print("app.py's edit picture transfer successful, with picture ", item_picture)
+
         if item_picture == None:
             print("app.py's edit: user don't change picture, picture should still be the same")
             item_picture = forum.item_picture(item_id)
 
-        classifications = request.form.getlist("classification_checkbox[]")
-        print("app.py's edit classifcations transfer successful, with classifications = ", classifications)
 
-        characteristics = characteristics_request()
-        print("app.py's edit ccharacteristics transfer successful, with characteristics = ", characteristics)
-        item_comment = request.form.get("item_comment")
-        forum.edit_item(item_id,item_name,item_picture,item_comment,classifications,characteristics)
+        forum.edit_item(item_id=item_id,item_name=item_name,item_location = item_location, item_picture=item_picture,item_comment=item_comment,item_classifications=item_classifications,item_characteristics=item_characteristics)
 
         flash("Tavaran muokkaus onnistui")
         print("app.py's edit_item succeeded, flash recorded")
@@ -390,9 +399,10 @@ def remove(item_id):
 
     if request.method == "GET": 
         print("app.py's remove method get requested")
-        item_name = forum.item_name(item_id)
-        print("app.py's remove method get data retrieve succeeded, item_name =",item_name,". Now rendering remove.html")
-        return render_template("remove.html", item_id=item_id, item_name = item_name)
+        item_name, item_picture = forum.item_name_picture(item_id)
+        picture_b64 = picture_converter(item_picture)
+        print("app.py's remove method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
+        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = picture_b64, remove = 1)
 
     if request.method == "POST":
         print("app.py's remove method post requested") 
@@ -414,16 +424,23 @@ def item(item_id):
         print("app.py's item method get requested")
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-        item_data = forum.item_data_full(item_id)
-        item_name = item_data[0]; owner_id = item_data[1]; item_picture = picture_converter(item_data[2]); item_comment = item_data[3]
-        classifications = forum.item_classifications(item_id)
-        characteristics = forum.item_characteristics(item_id)
+        item_data = forum.item_name_ownerid_location_picture_comment(item_id)
+        item_name = item_data[0]; owner_id = int(item_data[1]); item_location = item_data[2]; item_picture = picture_converter(item_data[3]); item_comment = item_data[4]
+        item_classifications = forum.item_classifications(item_id)
+        item_characteristics = forum.item_characteristics(item_id)
         owner_username = users.username(owner_id)
-        available = 1 if forum.is_borrowed(item_id) is None else None
-        if owner_id == session["user_id"]: allowed = 1
+
+        borrower_username_time = forum.borrower_username_time(item_id)
+        borrower_username = None; borrow_date = None; borrow_clock = None;
+        if borrower_username_time:
+            borrower_username, borrow_time = borrower_username_time
+            borrow_date, borrow_clock = borrow_time.split(' ')
+            borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
+
+        if owner_id == int(session["user_id"]): allowed = 1
         else: allowed = None
-        print("app.py's item method get data requests done, with item_name =",item_name,", owner_id =",owner_id," item_picture = ",item_picture,", item_comment = ",item_comment,",owner_username = ",owner_username,",available=",available,",allowed=",allowed)
-        return render_template("item.html", item_id = item_id,item_name = item_name,owner_username = owner_username, item_picture = item_picture, item_comment=item_comment,classification_keys = classification_keys, characteristic_keys = characteristic_keys, classifications = classifications, characteristics = characteristics,  allowed = allowed, available=available)
+        print("app.py's item method get data requests done, with item_name =",item_name,", owner_id =",owner_id," item_picture = ",item_picture,", item_comment = ",item_comment,",owner_username = ",owner_username,",allowed=",allowed)
+        return render_template("item.html", item_id = item_id,item_name = item_name,item_location = item_location,owner_username = owner_username, item_picture = item_picture, item_comment=item_comment,classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics,  allowed = allowed, borrower_username = borrower_username, borrow_date = borrow_date, borrow_clock = borrow_clock)
 
 @app.route("/borrow/<item_id>", methods=["GET","POST"])
 def borrow(item_id):
@@ -434,9 +451,10 @@ def borrow(item_id):
 
     if request.method == "GET":
         print("app.py's borrow method get requested")
-        item_name = forum.item_name(item_id)
-        print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering borrow.html")
-        return render_template("borrow.html", item_id=item_id, item_name = item_name)        
+        item_name, item_picture = forum.item_name_picture(item_id)
+        picture_b64 = picture_converter(item_picture)
+        print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
+        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = picture_b64)        
 
     if request.method == "POST":
         print("app.py's borrow method post requested") 
@@ -460,9 +478,10 @@ def ret (item_id):
 
     if request.method == "GET":
         print("app.py's ret method get requested")
-        item_name = forum.item_name(item_id)
-        print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering borrow.html")
-        return render_template("borrow.html", item_id=item_id, item_name = item_name, ret = 1)        
+        item_name, item_picture = forum.item_name_picture(item_id)
+        picture_b64 = picture_converter(item_picture)        
+        print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
+        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = picture_b64, ret = 1)        
 
     if request.method == "POST":
         print("app.py's return method post requested") 
@@ -488,7 +507,7 @@ def search ():
         try: check_query(query)
         except:
             flash("VIRHE: varmista hakusanaa")
-            return render_template("search.html", username = username)  
+            return render_template("search.html")  
         
         page = request.args.get("page", 1, type=int)
 

@@ -1,54 +1,34 @@
 {% extends "layout.html" %}
+{% block title %}Etusivu{% endblock %}
+{% block header %}Etusivu{% endblock %}
 
 {% block content %}
+  <b>Tervetuloa, {{username}}!</b>
+  {% if available_items_count > 0 %}
+    <p class="front_page_main_text">
+      Varastossa on tällä hetkellä {{available_items_count}} {% if available_items_count == 1 %}tavara{% else %}tavaraa{% endif %}.<br/>
+      Saatavilla olevat tavarat varastossa:</p>
+    {% for item in available_items %}
+    <p class = "front_page_item_list">
+      <a href="/item/{{ item[0] }}">{{ item[1] }}</a>
+      <a href="/borrow/{{ item[0] }}">Lainaa</a>
+      {% if session['user_id'] == item[2] %}
+        <a href="/edit/{{ item[0] }}">Muokkaa</a>      
+        <a href="/remove/{{ item[0] }}">Poista</a>      
+      {% endif %}<br/>
+      {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
+    </p>
+    {% endfor %}
 
-<h2>Tervetuloa, {{username}}</h2>
-
-{% for message in get_flashed_messages() %}
-<p class = "info">
-  <b>{{ message }}</b>
-</p>
-{% endfor %}
-
-<form action="{{ url_for('search') }}" method="GET">
-  <p>
-    Haku<br/>
-    <input type="text" id="query" name="query" value="{{ request.args.get('query', '') }}" minlength = "1" required><input type="submit" value="Hae">
-  </p>
-</form>
-
-{% if available_items_count > 0 %}
-  <p class="front_page_main_text">
-    Varastossa on tällä hetkellä {{available_items_count}} {% if available_items_count == 1 %}tavara{% else %}tavaraa{% endif %}.<br/>
-    Saatavilla olevat tavarat varastossa:</p>
-  {% for item in available_items %}
-  <p class = "front_page_item_list">
-    <a href="/item/{{ item[0] }}">{{ item[1] }}</a>
-    <a href="/borrow/{{ item[0] }}">Lainaa</a>
-    {% if session['user_id'] == item[2] %}
-      <a href="/edit/{{ item[0] }}">Muokkaa</a>      
-      <a href="/remove/{{ item[0] }}">Poista</a>      
-    {% endif %}<br/>
-    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
-  </p>
-  {% endfor %}
-
-  <p class="front_page_page_nav">
-  {% if page >= 2 %}<a href="{{ url_for('front_page', page = page - 1) }}">&lt;&lt;</a>{% endif %}
-  Sivu {{ page }}/{{ page_count }}
-  {% if page < page_count %}<a href="{{ url_for('front_page', page = page + 1) }}">&gt;&gt;</a>{% endif %}
-  </p>
+    <p class="front_page_page_nav">
+    {% if page >= 2 %}<a href="{{ url_for('front_page', page = page - 1) }}">&lt;&lt;</a>{% endif %}
+    Sivu {{ page }}/{{ page_count }}
+    {% if page < page_count %}<a href="{{ url_for('front_page', page = page + 1) }}">&gt;&gt;</a>{% endif %}
+    </p>
 
 
-{% else %}
-  <p class="front_page_main_text">Varasto on tällä hetkellä tyhjä</p>
-{% endif %}
-
-
-
-<a href="/upload">Lisää tavara varastoon</a> <br /> <br />
-<a href="/borrowed">Katso kaikki varastosta lainatut tavarat</a> <br /> <br />
-<a href="/logout">Kirjaudu ulos</a>
-
+  {% else %}
+    <p class="front_page_main_text">Varasto on tällä hetkellä tyhjä</p>
+  {% endif %}
 
 {% endblock %}

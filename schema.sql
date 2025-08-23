@@ -10,6 +10,7 @@ CREATE TABLE items (
     item_id INTEGER PRIMARY KEY,
     item_name TEXT NOT NULL,
     owner_id INTEGER NOT NULL,
+    item_location TEXT NOT NULL,
     item_picture BLOB DEFAULT NULL,
     --uploaded BOOLEAN DEFAULT 1,
     --borrowed BOOLEAN DEFAULT 0,
