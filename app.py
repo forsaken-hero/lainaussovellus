@@ -240,6 +240,15 @@ def borrowed(page = 1):
         print("app.py's borrowed method get finished, rendering borrowed.html")
         return render_template("borrowings.html", borrowed_items = forum.borrowed_items(page, page_size), borrowed_items_count = borrowed_items_count, page = page, page_count = page_count)
 
+@app.route("/user/", methods=["GET"])
+def user_page_reroute():
+    check1 = login_check()
+    if check1: return check1
+
+    if request.method == "GET":
+        print("app.py's user_page_reroute method get requested")
+        return redirect("/user/" + str(session["username"]))
+
 @app.route("/user/<user>", methods=["GET","POST"])
 @app.route("/user/<user>/<int:page>", methods=["GET","POST"])
 def user_page(user, page = 1):
@@ -270,7 +279,7 @@ def user_page(user, page = 1):
         try:
             user_picture = picture_request(fieldname = "user_picture")
         except:
-            flash("Käyttäjäkuvan lataus epäonnistui. Varmista tiedoston koko ja tyyppi.")
+            flash("Käyttäjäkuvan lataus epäonnistui. Tarkista tiedoston koko ja tyyppi.")
             print("app.py's user_page post except. Flash reorded and redirecting to /user/",session["username"])
             return redirect("/user/" + session["username"])
 
@@ -312,7 +321,7 @@ def upload():
         try:
             item_picture = picture_request("item_picture")
         except:
-            flash("Kuvan lataus epäonnistui. Varmista kuvan koko ja tyyppi.")
+            flash("Kuvan lataus epäonnistui. Tarkista kuvan koko ja tyyppi.")
             return render_template("upload.html", item_name = item_name, item_location = item_location, item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
 
         print("app.py's upload picture transfer successful, with picture ", item_picture)
@@ -373,7 +382,7 @@ def edit(item_id):
         try:
             item_picture = picture_request("item_picture")
         except:
-            flash("Kuvan lataus epäonnistui. Varmista kuvan koko ja tyyppi.")
+            flash("Kuvan lataus epäonnistui. Tarkista kuvan koko ja tyyppi.")
             return render_template("upload.html", item_id = item_id, item_name = item_name, item_location = item_location,item_picture = picture_converter(forum.item_picture(item_id)), item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
 
         
@@ -421,21 +430,15 @@ def item(item_id):
     if check1: return check1
 
     if request.method == "GET":
-        print("app.py's item method get requested")
+        print("app.py's item method get requested, for item_id",item_id)
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-        item_data = forum.item_name_ownerid_location_picture_comment(item_id)
-        item_name = item_data[0]; owner_id = int(item_data[1]); item_location = item_data[2]; item_picture = picture_converter(item_data[3]); item_comment = item_data[4]
+        item_name, owner_id, item_location, item_picture, item_comment = forum.item_name_ownerid_location_picture_comment(item_id)
+        item_picture = picture_converter(item_picture)
         item_classifications = forum.item_classifications(item_id)
         item_characteristics = forum.item_characteristics(item_id)
         owner_username = users.username(owner_id)
-
-        borrower_username_time = forum.borrower_username_time(item_id)
-        borrower_username = None; borrow_date = None; borrow_clock = None;
-        if borrower_username_time:
-            borrower_username, borrow_time = borrower_username_time
-            borrow_date, borrow_clock = borrow_time.split(' ')
-            borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
+        borrower_username, borrow_clock, borrow_date = forum.borrower_username_time(item_id)
 
         if owner_id == int(session["user_id"]): allowed = 1
         else: allowed = None
@@ -493,6 +496,39 @@ def ret (item_id):
             flash("Tavaran palautus onnistui")
             print("app.py's return succeeded, redirecting to front_page")
         return redirect("/front_page/")  
+
+@app.route("/user_borrowings/", methods=["GET"])
+def user_borrowings_reroute():
+    check1 = login_check()
+    if check1: return check1
+
+    if request.method == "GET":
+        print("app.py's user_borrowings_reroute method get requested")
+        return redirect("/user_borrowings/" + str(session["username"]))
+
+@app.route("/user_borrowings/<user>", methods=["GET","POST"])
+@app.route("/user_borrowings/<user>/<int:page>", methods=["GET","POST"])
+def user_borrowings(user, page = 1):
+    check1 = login_check()
+    if check1: return check1
+
+    if request.method == "GET":
+        print("app.py's borrowed method get requested, for user" + str(user))
+        
+        borrower_id = users.user_id(user)
+        user_borrowings_count = forum.user_borrowings_count(borrower_id)
+        page_size = 10
+        page_count = math.ceil(user_borrowings_count / page_size)
+        page_count = max(page_count, 1)
+
+
+        if page < 1:
+            return redirect("/user_borrowings/" + str(user) + "/1")
+        if page > page_count:
+            return redirect("/user_borrowings/" + str(user) + str(page_count))
+
+        print("app.py's borrowed method get finished, rendering borrowed.html")
+        return render_template("user_borrowings.html", borrower_id = borrower_id, user=user,user_borrowings = forum.user_borrowings(borrower_id, page, page_size), user_borrowings_count = user_borrowings_count, page = page, page_count = page_count)
 
 @app.route("/search", methods=["GET","POST"])
 def search ():

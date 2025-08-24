@@ -1,6 +1,6 @@
 
-import db, itertools, datetime, users, app, base64
-
+import db, itertools, users, app, base64
+from datetime import datetime
 
 def available_items(page = 1, page_size = 10):
     print("forum.py's available_items called")    
@@ -31,7 +31,7 @@ def available_items_count():
     print("forum.py's available_items_count data transfer succeeded, returning", out)    
     return out    
 
-def borrowed_items(page = 1, page_size = 10):#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture, 4=borrower_id, 5 = borrow_clock, 6 = borrow_day, 7 = borrower_username
+def borrowed_items(page = 1, page_size = 10):#indexes 0=item_id, 1=item_name, 2=owner_id, 3=item_picture, 4=borrower_id, 5 = borrow_clock, 6 = borrow_date, 7 = borrower_username
     print("forum.py's borrowed_items called")    
     sql = """SELECT i.item_id,  
                     i.item_name, 
@@ -43,7 +43,7 @@ def borrowed_items(page = 1, page_size = 10):#indexes 0=item_id, 1=item_name, 2=
             FROM items i 
             JOIN borrowings b ON i.item_id = b.item_id 
             JOIN users u ON u.user_id = b.borrower_id
-            ORDER BY i.item_id ASC
+            ORDER BY b.borrow_time DESC
             LIMIT ? OFFSET ?
             """
     out = []
@@ -51,11 +51,40 @@ def borrowed_items(page = 1, page_size = 10):#indexes 0=item_id, 1=item_name, 2=
     offset = page_size * (page - 1)
     for data in db.query(sql, [limit, offset]): 
         item_id, item_name, owner_id, item_picture, borrower_id, borrow_time, borrower_username = data
-        borrow_clock, borrow_day = borrow_time.split(' ')
+        borrow_date, borrow_clock = borrow_time.split(' ')
+        borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
         picture_b64 = app.picture_converter(item_picture)
-        out.append([item_id, item_name, owner_id, picture_b64, borrower_id, borrow_clock, borrow_day, borrower_username])
+        out.append([item_id, item_name, owner_id, picture_b64, borrower_id, borrow_clock, borrow_date, borrower_username])
 
     print("forum.py's borrowed_items data transfer succeeded, returning", out)    
+    return out
+
+def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 1 = item_name, 2 = owner_id, 3 = item_picture, 4 = borrow_clock, 5 = borrow_date
+    print("forum.py's user_borrowings called, for id =",id)    
+    sql = """SELECT i.item_id,  
+                    i.item_name, 
+                    i.owner_id,
+                    i.item_picture,
+                    b.borrow_time
+            FROM items i 
+            JOIN borrowings b ON i.item_id = b.item_id 
+            JOIN users u ON u.user_id = b.borrower_id
+            WHERE b.borrower_id = ?
+            ORDER BY b.borrow_time DESC
+            LIMIT ? OFFSET ?
+            """
+    out = []
+    limit = page_size
+    offset = page_size * (page - 1)
+    for data in db.query(sql, [borrower_id, limit, offset]): 
+        item_id, item_name, owner_id, item_picture, borrow_time = data
+        print("forum.py's user_borrowings borrow_time = ",borrow_time)
+        borrow_date, borrow_clock = borrow_time.split(' ')
+        borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
+        picture_b64 = app.picture_converter(item_picture)
+        out.append([item_id, item_name, owner_id, picture_b64, borrow_clock, borrow_date])
+
+    print("forum.py's user_borrowings data transfer succeeded, returning", out)    
     return out
 
 def borrowed_items_count():
@@ -63,6 +92,13 @@ def borrowed_items_count():
     sql = "SELECT COUNT(*) FROM items i WHERE i.item_id IN (SELECT b.item_id FROM borrowings b)"
     out = db.query(sql)[0][0]
     print("forum.py's borrowed_items_count data transfer succeeded, returning", out)    
+    return out    
+
+def user_borrowings_count(id):
+    print("forum.py's user_borrowings_count called")
+    sql = "SELECT COUNT(*) FROM borrowings WHERE borrower_id = ?"
+    out = db.query(sql,[id])[0][0]
+    print("forum.py's user_borrowings_count data transfer succeeded, returning", out)    
     return out    
 
 def user_uploads(owner_id, page = 1, page_size = 10):
@@ -108,12 +144,20 @@ def borrower_username_time(item_id):
             JOIN users u ON u.user_id = b.borrower_id
             WHERE b.item_id = ?"""
     try:
-        out = db.query(sql,[item_id])[0]
+        borrower_username, borrow_time = db.query(sql,[item_id])[0]
+        print("users.py line 147, borrower_username now",borrower_username,"borrow_time",borrow_time)
+        borrow_date, borrow_clock = borrow_time.split(' ')
+        print("users.py line 147, borrower_date now",borrow_date,"borrow_clock",borrow_clock)
+        borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
+        out = [borrower_username,borrow_clock,borrow_date]
         print("forum.py's borrower_username_id query succeeded, returning",out)
         return out
     except:
-        print("forum.py's borrower_username_id query succeeded, returning None")
-        return None
+        print("forum.py's borrower_username_id query succeeded, returning [None, None, None]")
+        return [None, None, None]
+
+
+
 
 def insert_item(item_name, owner_id, item_location, item_picture = None, item_comment = None, con = None):
     print("forum.py's insert_item called")
@@ -235,10 +279,10 @@ def item_name_location_picture_comment(item_id): #0 = item_name, 1= item_locatio
     return out
 
 def item_name_ownerid_location_picture_comment(item_id): #0 = item_name, 1= owner_id, 2 = item_location, 3 = item_picture, 4 = item_comment
-    print("forum.py's item_data_full called, enquiring for item_id",item_id)
+    print("forum.py's item_name_ownerid_location_picture_comment called, enquiring for item_id",item_id)
     sql = "SELECT item_name, owner_id, item_location, item_picture, item_comment FROM items WHERE item_id = ?"
     out = db.query(sql,[item_id])[0]
-    print("forum.py's item_data_full done, returning", out)
+    print("forum.py's item_name_ownerid_location_picture_comment done, returning", out)
     return out
 
 def item_owner_id(item_id):
@@ -288,7 +332,7 @@ def item_characteristics(item_id): #returning a dictionary of the item_character
 def borrow_item(item_id, borrower_id):
     print("forum.py's borrow_item called for item_id",item_id)    
     sql = "INSERT INTO borrowings (item_id, borrower_id, borrow_time) VALUES (?, ?, ?)"
-    borrowings_id, con = db.execute(sql,[item_id,borrower_id,str(datetime.datetime.now().strftime("%H:%M %d/%m/%Y"))])
+    borrowings_id, con = db.execute(sql,[item_id,borrower_id,str(datetime.now().strftime("%Y/%m/%d %H:%M"))])
     print("forum.py's borrow_item done, with borrowings_id", borrowings_id)
     return borrowings_id    
 

@@ -21,7 +21,7 @@
           </li>
           <li><a href="/front_page/">Etusivu</a></li>
           <li><a href="/upload">Lisää tavara</a></li>
-          <li><a href="/user_borrowings/{{session['username']}}">Lainaukseni</a></li>
+          <li><a href="/user_borrowings/{{session['username']}}">Minun lainaukseni</a></li>
           <li><a href="/borrowings">Lainatut tavarat</a></li>
           <li><a href="/user/{{session['username']}}">Käyttäjätiedot</a></li>
           <li><a href="/logout">Kirjaudu ulos</a></li>
@@ -44,10 +44,12 @@
       {% block content %}{% endblock %}
     </div>
   </div>
+
   {% else %}
+
   <div class="page_out">
     <div class="header_1_out">
-      <h1>{% block header_1_out %}{% endblock %}</h1>
+      <h1>IiziLaina</h1>
     </div>
     <hr>
     <div class="header_2_out">
@@ -63,6 +65,7 @@
       {% block content_out %}{% endblock %}
     </div>
   </div>
+
   {% endif %}
 </body>
 </html>

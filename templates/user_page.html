@@ -74,6 +74,6 @@
 
 {% endif %}
 
-<a href="/user_borrows/{{ user }}">Katso {% if id == session["user_id"] %}lainaamasi{% else %}käyttäjän {{user}} lainaamat{% endif %} tavarat</a>
+<a href="/user_borrowings/{{ user }}">Katso {% if id == session["user_id"] %}lainaamasi{% else %}käyttäjän {{user}} lainaamat{% endif %} tavarat</a>
 
 {% endblock %}

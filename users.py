@@ -28,14 +28,21 @@ def username(user_id):
     print("users.py's username success, returning", out)
     return out
 
-def user_id_picture(username):
-    print("users.py's user_data called for username", username)
+def user_id_picture(user):
+    print("users.py's user_id_picture called for user", user)
     sql = "SELECT user_id, user_picture FROM users WHERE username = ?"
-    user_id, user_picture = db.query(sql, [username])[0]
+    id, user_picture = db.query(sql, [user])[0]
     picture_b64 = app.picture_converter(user_picture)
-    out = [user_id, picture_b64]
-    print("users.py's user_data done, returning", out)
+    out = [id, picture_b64]
+    print("users.py's user_id_picture done, returning", out)
     return out
+
+def user_id(user):
+    print("users.py's user_id called for user", user)
+    sql = "SELECT user_id FROM users WHERE username = ?"
+    id = db.query(sql, [user])[0][0]
+    print("users.py's user_id done, returning", id)
+    return id
 
 def upload_picture(user_id, user_picture = None):
     print("users.py's upload_picture called for user_id", user_id, "picture to be uploaded ", user_picture) 

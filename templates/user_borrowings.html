@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}{% if borrower_id == session['user_id'] %}Minun Lainaukseni{% else %}Käyttäjän {{user}} lainaukset{% endif %}{% endblock %}
+{% block header %}{% if borrower_id == session['user_id'] %}Minun Lainaukseni{% else %}Käyttäjän {{user}} lainaukset{% endif %}{% endblock %}
+
+{% block content %}
+
+{% if user_borrowings_count > 0 %}
+  <p class="borrowed_main_text">
+    {% if borrower_id == session['user_id'] %}Olet{% else %}Käyttäjä <a href="/user/{{user}}">{{user}}</a> on{% endif %} lainannut {{user_borrowings_count}} {% if user_borrowings_count == 1 %}tavara{% else %}tavaraa{% endif %} varastosta:<br />
+  </p>
+
+  {% for item in user_borrowings %}
+  <p class = "borrowed_items_list">
+    <a href="/item/{{ item[0] }}">{{ item[1] }}</a>, lainattu kello {{item[4]}} päivästä {{item[5]}} lähtien <br/>
+    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
+    {% if borrower_id == session['user_id'] %}<a href="/return/{{ item[0] }}">Palauta</a>{% endif %}
+    {% if item[2] == session['user_id'] %}<a href="/edit/{{ item[0] }}">Muokkaa</a>{% endif %}  
+  </p>
+  {% endfor %}
+
+  <p class="borrowed_page_nav">
+    {% if page >= 2 %}<a href="{{ url_for('user_borrowings', user = user, page = page - 1) }}">&lt;&lt;</a>{% endif %}
+    Sivu {{ page }}/{{ page_count }}
+    {% if page < page_count %}<a href="{{ url_for('user_borrowings', user = user, page = page + 1) }}">&gt;&gt;</a>{% endif %}
+  </p>
+
+
+
+{% else %}
+  <p class="borrowed_main_text">{% if borrower_id == session['user_id'] %}Et ole{% else %}Käyttäjä <a href="/user/{{user}}">{{user}}</a> ei ole{% endif %} lainannut yhtään tavaraa varastosta.</p>
+{% endif %}
+
+{% endblock %}
