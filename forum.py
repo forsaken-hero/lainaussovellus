@@ -4,15 +4,15 @@ from datetime import datetime
 
 def available_items(page = 1, page_size = 10):
     print("forum.py's available_items called")    
-    sql = """SELECT i.item_id, 
-                    i.item_name, 
-                    i.owner_id, 
-                    i.item_picture 
-            FROM items i 
-            WHERE i.item_id 
-            NOT IN (SELECT b.item_id FROM borrowings b)
+    sql = """SELECT i.item_id,
+                    i.item_name,
+                    i.owner_id,
+                    i.item_picture
+            FROM items i
+            LEFT JOIN borrowings b ON i.item_id = b.item_id
+            WHERE b.item_id IS NULL
             ORDER BY i.item_id ASC
-            LIMIT ? OFFSET ?
+            LIMIT ? OFFSET ?;
             """
     out = []
     limit = page_size
@@ -26,7 +26,10 @@ def available_items(page = 1, page_size = 10):
 
 def available_items_count():
     print("forum.py's available_items_call called")
-    sql = "SELECT COUNT(*) FROM items i WHERE i.item_id NOT IN (SELECT b.item_id FROM borrowings b)"
+    sql = """SELECT COUNT(*)
+        FROM items i
+        LEFT JOIN borrowings b ON i.item_id = b.item_id
+        WHERE b.item_id IS NULL;"""
     out = db.query(sql)[0][0]
     print("forum.py's available_items_count data transfer succeeded, returning", out)    
     return out    
@@ -89,7 +92,7 @@ def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 
 
 def borrowed_items_count():
     print("forum.py's borrowed_items_count called")
-    sql = "SELECT COUNT(*) FROM items i WHERE i.item_id IN (SELECT b.item_id FROM borrowings b)"
+    sql = "SELECT COUNT(*) FROM items i JOIN borrowings b ON i.item_id = b.item_id;"
     out = db.query(sql)[0][0]
     print("forum.py's borrowed_items_count data transfer succeeded, returning", out)    
     return out    
@@ -107,8 +110,9 @@ def user_uploads(owner_id, page = 1, page_size = 10):
                     i.item_name,
                     i.owner_id,
                     i.item_picture,
-                    NOT EXISTS (SELECT 1 FROM borrowings b WHERE b.item_id = i.item_id) AS has_borrowing
+                    CASE WHEN b.item_id IS NULL THEN 1 ELSE 0 END AS has_borrowing
             FROM items i
+            LEFT JOIN borrowings b ON i.item_id = b.item_id
             WHERE i.owner_id = ?
             ORDER BY i.item_id ASC
             LIMIT ? OFFSET ?;"""
@@ -145,9 +149,9 @@ def borrower_username_time(item_id):
             WHERE b.item_id = ?"""
     try:
         borrower_username, borrow_time = db.query(sql,[item_id])[0]
-        print("users.py line 147, borrower_username now",borrower_username,"borrow_time",borrow_time)
+        print("users.py line 148, borrower_username now",borrower_username,"borrow_time",borrow_time)
         borrow_date, borrow_clock = borrow_time.split(' ')
-        print("users.py line 147, borrower_date now",borrow_date,"borrow_clock",borrow_clock)
+        print("users.py line 150, borrower_date now",borrow_date,"borrow_clock",borrow_clock)
         borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
         out = [borrower_username,borrow_clock,borrow_date]
         print("forum.py's borrower_username_id query succeeded, returning",out)
@@ -423,7 +427,7 @@ def search(query, page = 1, page_size = 10):
     results = db.query(sql, [que,que,que,que,que,que,limit,offset])
     out = {}
     for result in results:
-        item_id = result[0]; item_name = result[1]; item_picture = result[2]; match_origin = result[3]; match_value = result[4]
+        item_id, item_name, item_picture, match_origin, match_value = result
         picture_b64 = app.picture_converter(item_picture)
         key = (item_id, item_name, picture_b64)
         if key not in out: #if the item_id not yet in out

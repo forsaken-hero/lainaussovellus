@@ -1,10 +1,20 @@
-import math, secrets, sqlite3, db, config, forum, users, markupsafe, base64
-from flask import Flask, abort, flash, make_response, redirect, render_template, request, session
+import math, secrets, sqlite3, db, config, forum, users, markupsafe, base64, time
+from flask import Flask, abort, flash, make_response, redirect, render_template, request, session, g
 from werkzeug.exceptions import Forbidden
 from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
+
+@app.before_request
+def before_request():
+    g.start_time = time.time()
+
+@app.after_request
+def after_request(response):
+    elapsed_time = round(time.time() - g.start_time, 2)
+    print("elapsed time:", elapsed_time, "s")
+    return response
 
 
 def require_login():
@@ -249,7 +259,7 @@ def user_page_reroute():
         print("app.py's user_page_reroute method get requested")
         return redirect("/user/" + str(session["username"]))
 
-@app.route("/user/<user>", methods=["GET","POST"])
+@app.route("/user/<user>/", methods=["GET","POST"])
 @app.route("/user/<user>/<int:page>", methods=["GET","POST"])
 def user_page(user, page = 1):
     check1 = login_check()
@@ -257,8 +267,12 @@ def user_page(user, page = 1):
 
     if request.method == "GET":
         print("app.py's user_page method get requested, for user/" + user + "/" + str(page))
-
-        id, user_picture = users.user_id_picture(user)
+        try:
+            print("app.py's user_page try for user", user)
+            id, user_picture = users.user_id_picture(user)
+        except:
+            flash(f"Sovelluksessa ei ole käyttäjää, jolla tunnus on '{user}'!")
+            return redirect("/front_page/")            
         user_uploads_count = forum.user_uploads_count(id)
         page_size = 10
         page_count = math.ceil(user_uploads_count / page_size)

@@ -50,18 +50,29 @@ CREATE TABLE characteristics (
 
 CREATE TABLE borrowings (
     borrowings_id INTEGER PRIMARY KEY,
-    item_id INTEGER NOT NULL,
+    item_id INTEGER NOT NULL UNIQUE,
     borrower_id INTEGER NOT NULL,
     borrow_time TEXT NOT NULL,
     FOREIGN KEY(item_id) REFERENCES items(item_id)
     FOREIGN KEY(borrower_id) REFERENCES users(user_id)
 );
 
-CREATE TABLE uploads (
-    uploads_id INTEGER PRIMARY KEY,
-    item_id INTEGER NOT NULL,
-    upload_time TEXT NOT NULL,
-    removal_time TEXT,
-    FOREIGN KEY(item_id) REFERENCES items(item_id) ON DELETE CASCADE    
 
-);
+
+CREATE INDEX idx_items_ownerid ON items(owner_id);
+CREATE INDEX idx_items_itemname ON items(item_name);
+CREATE INDEX idx_items_itemlocation ON items(item_location);
+CREATE INDEX idx_items_itemcomment ON items(item_comment);
+
+CREATE INDEX idx_borrowings_borrowerid_borrowtime
+ON borrowings(borrower_id, borrow_time DESC);
+
+
+CREATE INDEX idx_classifications_itemid ON classifications(item_id);
+CREATE INDEX idx_classifications_keysid ON classifications(classification_keys_id);
+
+CREATE INDEX idx_characteristics_itemid ON characteristics(item_id);
+CREATE INDEX idx_characteristics_keysid ON characteristics(characteristic_keys_id);
+CREATE INDEX idx_characteristics_value ON characteristics(characteristic_value);
+
+
