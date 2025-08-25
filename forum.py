@@ -4,13 +4,13 @@ from datetime import datetime
 
 def available_items(page = 1, page_size = 10):
     print("forum.py's available_items called")    
-    sql = """SELECT i.item_id,
-                    i.item_name,
-                    i.owner_id,
-                    i.item_picture
+    sql = """SELECT i.item_id, i.item_name, i.owner_id, i.item_picture
             FROM items i
-            LEFT JOIN borrowings b ON i.item_id = b.item_id
-            WHERE b.item_id IS NULL
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM borrowings b
+                WHERE b.item_id = i.item_id
+            )
             ORDER BY i.item_id ASC
             LIMIT ? OFFSET ?;
             """
@@ -27,9 +27,12 @@ def available_items(page = 1, page_size = 10):
 def available_items_count():
     print("forum.py's available_items_call called")
     sql = """SELECT COUNT(*)
-        FROM items i
-        LEFT JOIN borrowings b ON i.item_id = b.item_id
-        WHERE b.item_id IS NULL;"""
+            FROM items i
+            WHERE NOT EXISTS (
+                SELECT 1 
+                FROM borrowings b 
+                WHERE b.item_id = i.item_id
+            );"""
     out = db.query(sql)[0][0]
     print("forum.py's available_items_count data transfer succeeded, returning", out)    
     return out    
@@ -71,7 +74,6 @@ def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 
                     b.borrow_time
             FROM items i 
             JOIN borrowings b ON i.item_id = b.item_id 
-            JOIN users u ON u.user_id = b.borrower_id
             WHERE b.borrower_id = ?
             ORDER BY b.borrow_time DESC
             LIMIT ? OFFSET ?
@@ -92,7 +94,7 @@ def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 
 
 def borrowed_items_count():
     print("forum.py's borrowed_items_count called")
-    sql = "SELECT COUNT(*) FROM items i JOIN borrowings b ON i.item_id = b.item_id;"
+    sql = "SELECT COUNT(*) borrowings;"
     out = db.query(sql)[0][0]
     print("forum.py's borrowed_items_count data transfer succeeded, returning", out)    
     return out    
@@ -110,9 +112,10 @@ def user_uploads(owner_id, page = 1, page_size = 10):
                     i.item_name,
                     i.owner_id,
                     i.item_picture,
-                    CASE WHEN b.item_id IS NULL THEN 1 ELSE 0 END AS has_borrowing
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM borrowings b WHERE b.item_id = i.item_id
+                    ) THEN 1 ELSE 0 END AS has_borrowing
             FROM items i
-            LEFT JOIN borrowings b ON i.item_id = b.item_id
             WHERE i.owner_id = ?
             ORDER BY i.item_id ASC
             LIMIT ? OFFSET ?;"""

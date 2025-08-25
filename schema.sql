@@ -76,3 +76,6 @@ CREATE INDEX idx_characteristics_keysid ON characteristics(characteristic_keys_i
 CREATE INDEX idx_characteristics_value ON characteristics(characteristic_value);
 
 
+
+
+
