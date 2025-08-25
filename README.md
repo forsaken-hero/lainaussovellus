@@ -1,5 +1,4 @@
 # lainaussovellus
-# välipalautus 3
 
 Sovellus on yleiskäyttövaraston lainausjärjestelmä. Tällä kehitysversiollä sovelluksella onnistuvat seuraavat toiminnot:
 +  Käyttäjä pystyy luomaan tunnuksen ja kirjautumaan sisään sovellukseen.
@@ -14,6 +13,8 @@ Lopullista palautusta varten täytyy vielä kehittää mm.
 -  toimintojen parannus
 -  tietoturvan parannus
 -  yksityiskohdat, ulkoasut, siisteys
+  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 **KÄYNNISTYS JA TEHTAUSOHJEET**
 
@@ -23,7 +24,9 @@ Lopullista palautusta varten täytyy vielä kehittää mm.
   
 +  Tietokannat luodaan schema.sql-tiedostolla, ja alustavasti täytetään init.sql-tiedostolla.
   
-+  Asennusten jälkeen, voit aloittaa testauksen.Sovelluksessa pitäisi ensiksi pystyä luomaan uuden tunnuksen. Sisään kirjautumisen jälkeen, pääset lisäämään, tarkastamaan, muokkaamaan, ja poistamaan tietokohteita. Pääset myös lisäämään kuvia, testamaan lainausjärjestelmää ja hakutoimintoa.
++  Asennusten jälkeen, voit aloittaa testauksen. Sovelluksessa pitäisi ensiksi pystyä luomaan uuden tunnuksen. Sisään kirjautumisen jälkeen, pääset lisäämään, tarkastamaan, muokkaamaan, ja poistamaan tietokohteita. Pääset myös lisäämään kuvia, testamaan lainausjärjestelmää ja hakutoimintoa.
+
++  On myös saatavilla data.sql-tiedosto jonka avulla voit lisätä aloitustietoja testausta varten.
 
 **KOMMENNOT TESTAUSTA VARTEN**
 
@@ -40,6 +43,8 @@ $ pip install flask
 $ sqlite3 database.db < schema.sql
 
 $ sqlite3 database.db < init.sql
+
+$ sqlite3 database.db < data.sql (vain jos haluat käyttää aloitustestaustiedot)
 
 $ flask run tai $ flask run --debug
 
@@ -58,50 +63,20 @@ sqlite3 database.db < schema.sql
 
 sqlite3 database.db < init.sql
 
+sqlite3 database.db < data.sql (vain jos haluat käyttää aloitustestaustiedot)
+
 flask run tai flask run --debug
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
------------------------------------------------------------------------------------------------------------------------------
+**SUUREN TIETOMÄÄRÄN TESTAUS**
 
+Repositoriossa on tiedosto seed.py jonka avulla voit testata suuren tietomäärän käsittely. Testaus toimii parhaiten ilman aloitustestaustietoja, eli älä suorita sqlite3 database.db < data.sql. Sen sijaan, vertailua varten voit ensiksi kommentoida "CREATE INDEX" syntaksit pois schema.sql:stä, luoda & täyttää tietokantaa kommennoilla sqlite3 database.db < schema.sql ja sen jälkeen python3 seed.py. Sen jälkeen pystyt luomaan uuden tunnuksen ja kirjautumaan sisään. Huom: seed.py:n avulla ilman indeksisyntakseja luotu database.db:n koko on noin 350 MB, ja indeksien kanssa noin 1GB!
 
-**#välipalautus 2**
-
-Sovellus on yleiskäyttövaraston lainausjärjestelmä. Tällä kehitysversiollä sovelluksella onnistuvat seuraavat toiminnot:
-
--  Käyttäjä pystyy luomaan tunnuksen ja kirjautumaan sisään sovellukseen.
--  Käyttäjä pystyy lisäämään ja muokkaamaan tietokohteita.
--  Käyttäjä näkee sovellukseen lisätyt tietokohteet.
--  Sovelluksessa on käyttäjäsivut, jotka näyttävät varastoon lisätyt tietokohteet.
--  Käyttäjä pystyy valitsemaan tietokohteelle yhden tai useamman luokittelun. Mahdolliset luokat ovat tietokannassa.
-
-Lopullista palautusta varten täytyy vielä kehittää mm.
-
--  tietokohteiden poistaminen
--  lainausjärjestelmä
--  tietokannan lajennus
--  hakutoiminnat
--  tilastot tietokohteista käyttäjäsivussa
--  tietoturvan parannus
--  ulkoasut
-
-Sovellus on kehitetty kurssin esimerkkisoveluksen kehyksestä, käytetyt tiedostot viittavat esimerkkisoveluksen tiedostoihin ja sovelluksen rakenne on samanlaista.
-
-Testaa ensin luomalla database.db schema.sql:stä, sitten käynnistämällä flask. Sen jälkeen pitäisi pystyä luomaan uuden tunnuksen, lisäämään ja muokkaamaan tietokohteita.
-
-
------------------------------------------------------------------------------------------------------------------------------
-
-
-**#välipalautus 1**
-
--  Sovelluksessa käyttäjät pystyvät ylläpitämään yhteiskäyttövaraston tavaroiden lainaustoiminnat.
--  Käyttäjä pystyy luomaan tunnuksen ja kirjautumaan sisään sovellukseen.
--  Käyttäjä pystyy lisäämään ja poistamaan tavaroita, kirjaamaan lainaustoimintaa, sekä laittamaan kommentteja tavaroihin.
--  Käyttäjä näkee sovellukseen lisätyt tavarat, niiden omistajat, lainaustoiminnat/historiat, sekä kommentit.
--  Käyttäjä pystyy etsimään tavaroita niiden ominaisuuksien perusteella.
--  Käyttäjäsivu näyttää, montako tavaraa, lainaustoimintaa ja kommenttia käyttäjä on lähettänyt. Tiedot näytetään myös listana.
--  Käyttäjä pystyy valitsemaan tavaroille yhden tai useamman luokittelun (esim. tavaroiden laji, tuotemerkki, väri, jne.).
--  Käyttäjä pystyy kirjaamaan lainaustoimintaa. Lainausilmoituksessa näytetään, milloin tavarat lainataan ja palautetaan.
--  Käyttäjä pystyy kirjoittamaan kommentteja tavaroiden kunnosta.
-
-Tässä pääasiallinen tietokohde on tavarailmoitus ja toissijainen tietokohde on omistaja, lainaustoiminnat, ja kommentit.
+Testauksen aikana huomattiin seuraavia parannuksia (huomaa että tiedostossa seed.py käytetään satunaista elementtejä, eli jokainen testaus tuottaa erilaisia tuloksia):
+-  käyttäjäsivuilla (/user/usertest1) ilman indekseja siinä aikana ladatun tavaran määrä oli 100.323 ja vei 0.6 sekuntia. Indekseillä ladatun tavaran määrä oli 100.035 ja vei 0.03 sekuntia. Vastaavanlainen esimerkki löytyi usertest90:stä (99.678 tavaraa, 0.56 sekuntia ilman; 100.044 tavaraa, 0.01 sekuntia indekseillä). Tämä johtuu indeksistä items(owner_id) (CREATE INDEX idx_items_ownerid ON items(owner_id)) koska forum.user_uploads kyselee owner_id:n perusteella.
+  
+-  käyttäjänlainaussivuilla (user_borrowings/usertest1) ilman indekseja siinä aikana ladatun tavaran määrä oli 9.958 ja vei 0.22 sekuntia. Indekseillä laadatun tavaran määrä oli 9.952 ja vei 0.01 sekuntia. Vastaavanlainen esimerkki löytyi usertest90:stä (9.980 tavaraa, 0.21 sekuntia ilman; 9.828 tavaraa, 0.00 sekuntia indekseillä). Tämä johtuu indekseistä borrower_id ja borrow_time (CREATE INDEX idx_borrowings_borrowerid_borrowtime
+  ON borrowings(borrower_id, borrow_time DESC)) koska forum.user_borrowings kyselee borrower_id:n perusteella ja järjestää borrow_time laskevaan järjestykseen.
+  
+-  haku hakusanalla 'itemt' ilman indekseja siinä aikana vei 14.05 sekuntia. Indekseillä vei 10.29 sekuntia. Tämä johtuu indeksistä items(item_name) (CREATE INDEX idx_items_itemname ON items(item_name)) koska forum.search hakee tavarannimen perusteella jonka nimi sisältää 'itemt'
