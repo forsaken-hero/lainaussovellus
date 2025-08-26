@@ -16,7 +16,7 @@
         <a href="/edit/{{ item[0] }}">Muokkaa</a>      
         <a href="/remove/{{ item[0] }}">Poista</a>      
       {% endif %}<br/>
-      {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
+      {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" width="50">{% endif %}
     </p>
     {% endfor %}
 

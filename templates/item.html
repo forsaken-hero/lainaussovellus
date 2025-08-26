@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
-{% block title %}Tavaran tiedot{% endblock %}
-{% block header %}{{item_name}}{% endblock %}
+{% block title %}Tavaran tiedot: {{item_name}}{% endblock %}
+{% block header %}Tavaran tiedot: {{item_name}}{% endblock %}
 
 {% block content %}
 
-  {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" width="300"> <br /> {% endif %}
+  {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" width="300"> <br /> {% endif %}
   <p>
     <label for="item_main_text">Omistaja: <a href="/user/{{owner_username}}">{{owner_username}}</a></label><br /><br />
     <label for="item_main_text">Säilytys sijainti: {{item_location}}</a></label><br /><br />

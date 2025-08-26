@@ -12,7 +12,7 @@
   {% for item in user_borrowings %}
   <p class = "borrowed_items_list">
     <a href="/item/{{ item[0] }}">{{ item[1] }}</a>, lainattu kello {{item[4]}} päivästä {{item[5]}} lähtien <br/>
-    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" width="50">{% endif %}
+    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" width="50">{% endif %}
     {% if borrower_id == session['user_id'] %}<a href="/return/{{ item[0] }}">Palauta</a>{% endif %}
     {% if item[2] == session['user_id'] %}<a href="/edit/{{ item[0] }}">Muokkaa</a>{% endif %}  
   </p>

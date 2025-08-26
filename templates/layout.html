@@ -15,6 +15,7 @@
           <li id="subtitle">laina iizisti!</li>
           <li>
             <form action="{{ url_for('search') }}" method="GET">
+              <label for="search_bar" class="sr-only">Hae</label>
               <input type="text" name="query" value="{{ request.args.get('query', '') }}" placeholder="Hae..." minlength="1" required>
               <input type="submit" value="Hae">
             </form>

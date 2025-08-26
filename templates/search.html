@@ -6,6 +6,7 @@
 
 <form action="{{ url_for('search') }}" method="GET">
   <p>
+    <label for="search_bar">Hae:</label>
     <input type="text" id="search_bar" name="query" value = "{{query if query else '' }}" minlength = "1" placeholder="Hae..." required> <input type="submit" value="Hae">
   </p>
 </form>
@@ -16,7 +17,7 @@
 
     {% for key, value in results[:10] %}
         <br/><a href="/item/{{key[0]}}">{{key[1]}}</a> <br />
-        {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" width="50">{% endif %}
+        {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" width="50">{% endif %}
         {% if value | length > 0 %}
           Haun osumat:<br/>
           {% for each in value %}

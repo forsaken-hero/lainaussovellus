@@ -8,7 +8,7 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
 <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
 
   <p>
-    <label for="upload_main_text">Tavaran nimi:</label><br />
+    <label for="item_name">Tavaran nimi:</label><br />
     <input type="text" 
       id="item_name" 
       name="item_name" 
@@ -21,18 +21,18 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
 
   <p>
     {% if item_picture %}
-      <img src="data:image/jpg;base64,{{ item_picture }}" width="150"> <br />
-      <label for="upload_main_text">Muokkaa kuva</label><br />
+      <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" width="150"> <br />
+      <label for="change_item_picture">Muokkaa kuva</label><br />
     {% else %}
-      <label for="upload_main_text">Lisää kuva</label><br />
+      <label for="upload_item_picture">Lisää kuva</label><br />
     {% endif %}
-    <label for="upload_side_text">Lähetä jpg-tiedosto, jonka koko on enintään 100 kt</label><br />
+    <label for="upload_jpg_picture_max_100_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään 100 kt</label><br />
     <input type="file" name="item_picture" accept=".jpg" />
 
   </p>
 
   <p>
-    <label for="upload_main_text">Säilytys sijainti:</label><br />
+    <label for="item_location">Säilytys sijainti:</label><br />
     <input type="text" 
       id="item_location" 
       name="item_location" 
@@ -44,7 +44,7 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
   </p>
 
   <p>
-    <label for="upload_main_text">Luokkitelut:</label><br />
+    <label for="item_classifications">Luokkitelut:</label><br />
     {% for classification_key in classification_keys %}
       <input type="checkbox"
        id="classification_checkbox_{{ classification_key }}"
@@ -52,14 +52,14 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
        value= "{{ classification_key }}"
        {% if classification_key|int in item_classifications %}checked{% endif %}
       />
-      <label for="classification_checkbox"> {{ classification_keys[classification_key] }}</label><br>
+      <label for="{{ classification_keys[classification_key] }}"> {{ classification_keys[classification_key] }}</label><br>
     {% endfor %}
   </p>
 
   <p>
-    <label for="upload_main_text">Ominaisuudet:</label><br />
+    <label for="item_characteristics">Ominaisuudet:</label><br />
     {% for characteristic_key in characteristic_keys %}
-      <label for="characteristic_headings"> {{ characteristic_keys[characteristic_key] }}</label>
+      <label for="{{characteristic_keys[characteristic_key]}}"> {{ characteristic_keys[characteristic_key] }}</label>
       <input type="text"
        id="characteristic_{{ characteristic_key }}"
        name="characteristic_{{ characteristic_key }}"
@@ -70,7 +70,7 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
   </p>
 
   <p>
-    <label for="upload_main_text">Kommentti:</label><br />
+    <label for="item_comment">Kommentti:</label><br />
     <textarea name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea>
     
   </p>

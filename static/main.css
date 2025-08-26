@@ -120,6 +120,14 @@ nav li:not(:first-of-type) {
 nav li:not(:last-of-type) {
   border-right: 1px solid black;
 }
+
+.container {
+  font-family: sans-serif;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-auto-rows: minmax(200px, auto);
+  gap: 10px;
+}
 /*
 .page-nav {
   text-align: center;
