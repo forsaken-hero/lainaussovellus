@@ -13,7 +13,7 @@
 
 {% if query %}
   {% if (results | length) > 0 %}
-    <p class="main_text">Tulokset hakusanalla '{{query}}'</p>
+    <p class="main_text">Tulokset hakusanalla '{{query}}':</p>
 
     {% for key, value in results[:10] %}
         <br/><a href="/item/{{key[0]}}">{{key[1]}}</a> <br />
@@ -25,7 +25,12 @@
             {% if each == "Omistaja" %}
               <a href="/user/{{text}}">{{text}}</a>
             {% else %}
-              {{text}} 
+              {% if each == "Kommentti" %}
+                <br/>{{text | show_lines}}
+              {% else %}
+                {{text}} 
+              {% endif %}
+              <br/>
             {% endif %}{% endfor %}<br/>
           {% endfor %}<br/>
         {% endif %}

@@ -6,29 +6,29 @@
 
   {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" width="300"> <br /> {% endif %}
   <p>
-    <label for="item_main_text">Omistaja: <a href="/user/{{owner_username}}">{{owner_username}}</a></label><br /><br />
-    <label for="item_main_text">Säilytys sijainti: {{item_location}}</a></label><br /><br />
-    <label for="item_main_text">Luokkitelut:</label><br />
+    Omistaja: <a href="/user/{{owner_username}}">{{owner_username}}</a><br /><br />
+    Säilytys sijainti: {{item_location}}<br /><br />
+    Luokkitelut:<br />
     {% for classification in item_classifications %}
-      <label for="item_side_text">{{classification_keys[classification]}}</label><br/>
+      {{classification_keys[classification]}}<br/>
     {% endfor %}
     <br />
-    <label for="item_main_text">Ominaisuudet:</label><br />
+    Ominaisuudet:<br />
     {% for characteristic in item_characteristics %}
-      <label for="item_side_text">{{characteristic_keys[characteristic]}}:  {{item_characteristics[characteristic]}}</label><br/>
+      {{characteristic_keys[characteristic]}}:  {{item_characteristics[characteristic]}}<br/>
     {% endfor %}
     <br />
-    <label for="item_main_text">Kommentti:</label><br/>
-    <label for="item_side_text">{{item_comment if item_comment else ''}}</label><br/>
-    {% if borrower_username %}Tavaran on lainannut käyttäjä <a href="/user/{{borrower_username}}">{{borrower_username}}</a> kello {{borrow_clock}} päivästä {{borrow_date}} lähtien{% endif %}
+    Kommentti:<br/>
+    {{item_comment | show_lines if item_comment else ''}}<br/>
+    {% if borrower_username %}Tavaran on lainannut käyttäjä <a href="/user/{{borrower_username}}">{{borrower_username}}</a> kello {{borrow_clock}} päivästä {{borrow_date}} lähtien.{% endif %}
   </p>
   {% if allowed %}
-    <a href="/edit/{{item_id}}">Muokkaa tavara</a> <br /> <br />
-    <a href="/remove/{{item_id}}">Poista tavara</a> <br /> <br />
+    <a href="/edit/{{item_id}}">Muokkaa</a> <br /> <br />
+    <a href="/remove/{{item_id}}">Poista</a> <br /> <br />
   {% endif %}
   {% if borrower_username %}
   {% else %}
-    <a href="/borrow/{{item_id}}">Lainaa tavara</a> <br /> <br />
+    <a href="/borrow/{{item_id}}">Lainaa</a> <br /> <br />
   {% endif %}
 
 {% endblock %}

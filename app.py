@@ -16,6 +16,11 @@ def after_request(response):
     print("elapsed time:", elapsed_time, "s")
     return response
 
+@app.template_filter()
+def show_lines(content):
+    content = str(markupsafe.escape(content))
+    content = content.replace("\n", "<br />")
+    return markupsafe.Markup(content)
 
 def require_login():
     print("app.py's require_login called")
