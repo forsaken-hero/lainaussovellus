@@ -16,24 +16,21 @@
     <p class="main_text">Tulokset hakusanalla '{{query}}':</p>
 
     {% for key, value in results[:10] %}
-        <br/><a href="/item/{{key[0]}}">{{key[1]}}</a> <br />
-        {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" width="50">{% endif %}
-        {% if value | length > 0 %}
-          Haun osumat:<br/>
-          {% for each in value %}
-            {{each}}: {% for text in value[each] %}
-            {% if each == "Omistaja" %}
-              <a href="/user/{{text}}">{{text}}</a>
+      <br/><a href="/item/{{key[0]}}">{{key[1]}}</a> <br />
+      {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" width="50"><br/>{% endif %}
+      {% if value | length > 0 %}
+        Haun osumat:<br/>
+        {% for each in value %}
+          {{each}}: 
+          {% for text in value[each] %}
+            {% if each == "Omistaja" %}<a href="/user/{{text}}">{{text}}</a>
             {% else %}
-              {% if each == "Kommentti" %}
-                <br/>{{text | show_lines}}
-              {% else %}
-                {{text}} 
-              {% endif %}
-              <br/>
-            {% endif %}{% endfor %}<br/>
+              {{text}} 
+            {% endif %}
+            <br/>
           {% endfor %}<br/>
-        {% endif %}
+        {% endfor %}<br/>
+      {% endif %}
       
     {% endfor %}
 

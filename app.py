@@ -48,18 +48,17 @@ def login_check():
 def borrow_check(item_id):
     print("app.py's borrow_check called for item_id",item_id)
     if forum.is_borrowed(item_id) == 1:
-        flash("Tavara on jo lainattu")
+        flash("Tavara on lainattu!")
         print("app.py's borrow_check flash recorded, redirecting to frontpage")
         return redirect("/front_page/")      
-    
 
 def return_check(item_id):
     print("app.py's return_check called for item_id",item_id)
     if forum.is_borrowed(item_id) == None:
-        flash("Tavara on jo varastossa")
+        flash("Tavara on jo varastossa!")
         print("app.py's return_check flash recorded, redirecting to frontpage")
         return redirect("/front_page/")      
-    
+
 def check_owner_id(item_id):
     print("app.py's check_owner_id called for item_id",item_id)
     owner_id = int(forum.item_owner_id(item_id))
@@ -85,7 +84,7 @@ def length_check(string,a,b):
 def check_query(query):
     print("app.py's check_query called, checking query", query)
     if not query:
-        raise Exception("VIRHE: varmista hakusanaa")
+        abort(403)  
 
 def picture_check(file,type = ".jpg", size = 100 * 1024)  :
     print("app.py's picture_check called, checking file", file," if it is the type",type,"with max size",size)
@@ -424,6 +423,8 @@ def remove(item_id):
     if check1: return check1
     check2 = check_owner_id(item_id)
     if check2: return check2
+    check3 = borrow_check(item_id)
+    if check3: return check3
 
     if request.method == "GET": 
         print("app.py's remove method get requested")

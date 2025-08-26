@@ -2,6 +2,20 @@
 import db, itertools, users, app, base64
 from datetime import datetime
 
+def comment_formatter(query, match_value):
+    print("forum.py's comment_formatter, processing kommentti")
+    index = match_value.find(query)
+    if index == -1:
+        formatted = ""
+    else:
+        start = max(0, index - 5)
+        end = index + len(query) + 5
+        cut = match_value[start:end]
+        formatted = f"{'...' if start > 0 else ''}{cut}{'...' if end < len(match_value) else ''}"
+    match_value = formatted
+    print("forum.py's search kommentti process done, formatted to become", match_value)
+    return match_value
+
 def available_items(page = 1, page_size = 10):
     print("forum.py's available_items called")    
     sql = """SELECT i.item_id, i.item_name, i.owner_id, i.item_picture
@@ -432,26 +446,27 @@ def search(query, page = 1, page_size = 10):
     for result in results:
         item_id, item_name, item_picture, match_origin, match_value = result
         picture_b64 = app.picture_converter(item_picture)
+        if match_origin == "Kommentti": match_value = comment_formatter(query, match_value)
         key = (item_id, item_name, picture_b64)
-        if key not in out: #if the item_id not yet in out
-            print("(item_id, item_name, picture_b64)",key," not yet in out, out now",out)
+        if key not in out: #if the item not yet in out
+            #print("(item_id, item_name, picture_b64)",key," not yet in out, out now",out)
             out[key] = {}
-            if match_origin != "Tavaran nimi": out[key].update({match_origin:[match_value]})
-
-            print("line 269 done, out now",out)
-        else: #if the item_id already in out
-            print("(item_id, item_name, picture_b64)",key," already in out, out now",out)
+            if match_origin != "Tavaran nimi":
+                out[key].update({match_origin:[match_value]})
+            #print("line 269 done, out now",out)
+        else: #if the item already in out
+            #print("(item_id, item_name, picture_b64)",key," already in out, out now",out)
             if match_origin == "Tavaran nimi":
                 print("no need to record, continue!")
                 continue
             if match_origin not in out[key]: #if the match_origin not yet in 
-                print("match_origin not yet in, out now",out)
+                #print("match_origin not yet in, out now",out)
                 out[key].update({match_origin:[match_value]})
-                print("line275 done, out now",out)
+                #print("line275 done, out now",out)
             else: #if the match_origin already in
-                print("match origin already in, out now", out)
+                #print("match origin already in, out now", out)
                 out[key][match_origin].append(match_value)
-                print("line279 done, out now",out)
+                #print("line279 done, out now",out)
     out = list(out.items())
     print("forum.py's search succeeded, returning",out)
     return out

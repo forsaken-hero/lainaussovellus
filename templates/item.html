@@ -24,7 +24,7 @@
   </p>
   {% if allowed %}
     <a href="/edit/{{item_id}}">Muokkaa</a> <br /> <br />
-    <a href="/remove/{{item_id}}">Poista</a> <br /> <br />
+      {% if borrower_username %}{% else %}<a href="/remove/{{item_id}}">Poista</a><br /> <br />{% endif %}
   {% endif %}
   {% if borrower_username %}
   {% else %}
