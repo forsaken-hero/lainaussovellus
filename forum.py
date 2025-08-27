@@ -2,6 +2,10 @@
 import db, itertools, users, app, base64
 from datetime import datetime
 
+def picture_converter(data):
+    if data:  return base64.b64encode(data).decode("utf-8")
+    return None
+
 def comment_formatter(query, match_value):
     print("forum.py's comment_formatter, processing kommentti")
     index = match_value.find(query)
@@ -33,7 +37,7 @@ def available_items(page = 1, page_size = 10):
     offset = page_size * (page - 1)
     for data in db.query(sql,[limit, offset]):
         item_id, item_name, owner_id, item_picture = data
-        picture_b64 = app.picture_converter(item_picture)
+        picture_b64 = picture_converter(item_picture)
         out.append([item_id, item_name, owner_id, picture_b64])
     print("forum.py's available_items data transfer succeeded, returning", out)    
     return out
@@ -73,14 +77,14 @@ def borrowed_items(page = 1, page_size = 10):#indexes 0=item_id, 1=item_name, 2=
         item_id, item_name, owner_id, item_picture, borrower_id, borrow_time, borrower_username = data
         borrow_date, borrow_clock = borrow_time.split(' ')
         borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
-        picture_b64 = app.picture_converter(item_picture)
+        picture_b64 = picture_converter(item_picture)
         out.append([item_id, item_name, owner_id, picture_b64, borrower_id, borrow_clock, borrow_date, borrower_username])
 
     print("forum.py's borrowed_items data transfer succeeded, returning", out)    
     return out
 
 def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 1 = item_name, 2 = owner_id, 3 = item_picture, 4 = borrow_clock, 5 = borrow_date
-    print("forum.py's user_borrowings called, for id =",id)    
+    print("forum.py's user_borrowings called, for id =",borrower_id)    
     sql = """SELECT i.item_id,  
                     i.item_name, 
                     i.owner_id,
@@ -97,10 +101,12 @@ def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 
     offset = page_size * (page - 1)
     for data in db.query(sql, [borrower_id, limit, offset]): 
         item_id, item_name, owner_id, item_picture, borrow_time = data
-        print("forum.py's user_borrowings borrow_time = ",borrow_time)
+        
         borrow_date, borrow_clock = borrow_time.split(' ')
         borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
-        picture_b64 = app.picture_converter(item_picture)
+        print("forum.py's user_borrowings before picture convert for item_id ",item_id,item_picture)
+        picture_b64 = picture_converter(item_picture)
+        print("forum.py's user_borrowings after picture convert for item_id ",item_id,picture_b64)
         out.append([item_id, item_name, owner_id, picture_b64, borrow_clock, borrow_date])
 
     print("forum.py's user_borrowings data transfer succeeded, returning", out)    
@@ -138,7 +144,7 @@ def user_uploads(owner_id, page = 1, page_size = 10):
     offset = page_size * (page - 1)
     for data in db.query(sql,[owner_id, limit, offset]):
         item_id, item_name, owner_id, item_picture, available = data
-        picture_b64 = app.picture_converter(item_picture)
+        picture_b64 = picture_converter(item_picture)
         out.append([item_id, item_name, owner_id, picture_b64, available])
     print("forum.py's user_uploads data transfer succeeded, returning", out)    
     return out
@@ -238,8 +244,14 @@ def upload_item(item_name, owner_id, item_location, item_picture = None, item_co
 
 def update_item(item_id, item_name,item_location, item_picture = None, item_comment = None, con = None):
     print("forum.py's update_item called")
-    sql = "UPDATE items SET item_name = ?, item_location = ?, item_picture = ?, item_comment = ? WHERE item_id = ?"
-    db.execute(sql,[item_name,item_location,item_picture,item_comment,item_id], con)
+    if item_picture:
+        print("forum.py's update_item item_picture changed")
+        sql = "UPDATE items SET item_name = ?, item_location = ?, item_picture = ?, item_comment = ? WHERE item_id = ?"
+        db.execute(sql,[item_name,item_location,item_picture,item_comment,item_id], con)
+    else:
+        print("forum.py's update_item item_picture unchanged!")
+        sql = "UPDATE items SET item_name = ?, item_location = ?, item_comment = ? WHERE item_id = ?"
+        db.execute(sql,[item_name,item_location,item_comment,item_id], con)        
     print("forum.py's update_item done")
 
 
@@ -295,7 +307,9 @@ def characteristic_keys(): #returns dictionary of the id: characteristic_name
 def item_name_location_picture_comment(item_id): #0 = item_name, 1= item_location, 2 = item_picture, 3 = item_comment
     print("forum.py's item_data called, enquiring for item_id",item_id)    
     sql = "SELECT item_name, item_location, item_picture, item_comment FROM items WHERE item_id = ?"
-    out = db.query(sql,[item_id])[0]
+    item_name, item_location, item_picture, item_comment = db.query(sql,[item_id])[0]
+    picture_b64 = picture_converter(item_picture)
+    out = [item_name, item_location, picture_b64, item_comment]
     print("forum.py's item_data done, returning", out)
     return out
 
@@ -316,9 +330,10 @@ def item_owner_id(item_id):
 def item_picture(item_id):
     print("forum.py's item_picture called,enquiring for item_id",item_id)    
     sql = "SELECT item_picture FROM items WHERE item_id = ?"
-    out = db.query(sql,[item_id])[0][0]
-    print("forum.py's item_picture done, returning", out)
-    return out
+    item_picture = db.query(sql,[item_id])[0][0]
+    picture_b64 = picture_converter(item_picture)
+    print("forum.py's item_picture done, returning", picture_b64)
+    return picture_b64
 
 def item_name(item_id):
     print("forum.py's item_name called,enquiring for item_id",item_id)    
@@ -330,7 +345,9 @@ def item_name(item_id):
 def item_name_picture(item_id):
     print("forum.py's item_name_picture called,enquiring for item_id",item_id)    
     sql = "SELECT item_name, item_picture FROM items WHERE item_id = ?"
-    out = db.query(sql,[item_id])[0]
+    item_name, item_picture = db.query(sql,[item_id])[0]
+    picture_b64 = picture_converter(item_picture)
+    out = [item_name, picture_b64]
     print("forum.py's item_name_picture done, returning", out)
     return out    
 
@@ -445,7 +462,7 @@ def search(query, page = 1, page_size = 10):
     out = {}
     for result in results:
         item_id, item_name, item_picture, match_origin, match_value = result
-        picture_b64 = app.picture_converter(item_picture)
+        picture_b64 = picture_converter(item_picture)
         if match_origin == "Kommentti": match_value = comment_formatter(query, match_value)
         key = (item_id, item_name, picture_b64)
         if key not in out: #if the item not yet in out
@@ -469,6 +486,33 @@ def search(query, page = 1, page_size = 10):
                 #print("line279 done, out now",out)
     out = list(out.items())
     print("forum.py's search succeeded, returning",out)
+    return out
+
+def item_page_data(item_id):
+    print("forum.py's item_page_data called for item_id", item_id)
+    sql ="""SELECT i.item_name,
+                    i.owner_id,
+                    i.item_location,
+                    i.item_picture,
+                    i.item_comment,
+                    u_owner.username AS owner_username,
+                    u_borrower.username AS borrower_username,
+                    b.borrow_time
+            FROM items i
+            JOIN users u_owner ON i.owner_id = u_owner.user_id
+            LEFT JOIN borrowings b ON i.item_id = b.item_id
+            LEFT JOIN users u_borrower ON b.borrower_id = u_borrower.user_id
+            WHERE i.item_id = ?;"""
+    
+    item_name, owner_id, item_location, item_picture, item_comment, owner_username, borrower_username, borrow_time = db.query(sql,[item_id])[0]
+    picture_b64 = picture_converter(item_picture)
+    borrow_date = None; borrow_clock = None
+    if borrow_time:
+        borrow_date, borrow_clock = borrow_time.split(' ')
+        borrow_date = datetime.strptime(borrow_date, "%Y/%m/%d").strftime("%d/%m/%Y")
+
+    out = [item_name, owner_id, item_location, picture_b64, item_comment, owner_username, borrower_username, borrow_clock, borrow_date]
+    print("forum.py's item_page_data completed, returning ",out)
     return out
 
 '''

@@ -1,10 +1,27 @@
 import math, secrets, sqlite3, db, config, forum, users, markupsafe, base64, time
 from flask import Flask, abort, flash, make_response, redirect, render_template, request, session, g
 from werkzeug.exceptions import Forbidden
+#from werkzeug.utils import secure_filename
 from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = config.secret_key
+app.config["USERNAME_PASSWORD_MINLENGTH"] = 3
+app.config["USERNAME_PASSWORD_MAXLENGTH"] = 20
+app.config["PICTURE_MAXSIZE_KB"] = 100
+app.config["ITEM_NAME_LOCATION_MINLENGTH"] = 1
+app.config["ITEM_NAME_LOCATION_MAXLENGTH"] = 100
+
+
+@app.context_processor
+def inject_data():
+    return dict(
+        USERNAME_PASSWORD_MINLENGTH=app.config["USERNAME_PASSWORD_MINLENGTH"],
+        USERNAME_PASSWORD_MAXLENGTH=app.config["USERNAME_PASSWORD_MAXLENGTH"],
+        PICTURE_MAXSIZE_KB=app.config["PICTURE_MAXSIZE_KB"],
+        ITEM_NAME_LOCATION_MINLENGTH = app.config["ITEM_NAME_LOCATION_MINLENGTH"],
+        ITEM_NAME_LOCATION_MAXLENGTH = app.config["ITEM_NAME_LOCATION_MAXLENGTH"]
+    )
 
 @app.before_request
 def before_request():
@@ -78,35 +95,33 @@ def check_borrower_id(item_id):
 def length_check(string,a,b):
     print("app.py's length_check called, checking string",string,"is it between",a,"-",b)
     if len(string) < a or len(string) > b:
-        print('ABORT since length_check for',string,' not between',a,'-',b)
-        abort(403)  
+        print('raise exception since length_check for',string,' not between',a,'-',b)
+        raise Exception("VIRHE: virheellinen syötteen pituus!") 
 
 def check_query(query):
     print("app.py's check_query called, checking query", query)
     if not query:
-        abort(403)  
+        print('raise exception in check_query for query',query,)
+        raise Exception("VIRHE: hakusana ei annettu!") 
 
-def picture_check(file,type = ".jpg", size = 100 * 1024)  :
-    print("app.py's picture_check called, checking file", file," if it is the type",type,"with max size",size)
+
+def picture_check(file,type = ".jpg", maxsize = app.config["PICTURE_MAXSIZE_KB"] * 1024)  :
+    print("app.py's picture_check called, checking file", file," if it is the type",type,"with max size",maxsize)
     if file:
-        if not file.filename.endswith(type):   raise Exception("VIRHE: väärä tiedostomuoto") ##check these raise later if it would be better to be flash, etc
+        if not file.filename.endswith(type):   raise ValueError("VIRHE: väärä tiedostomuoto") ##check these raise later if it would be better to be flash, etc
         image = file.read()
-        if len(image) > size:  raise Exception("VIRHE: liian suuri kuva")
+        if len(image) > maxsize:  raise ValueError("VIRHE: liian suuri kuva")
     print("app.py's picture_check finished, returning .read() image file",image)
     return image
 
-def picture_request(fieldname = "item_picture", type = ".jpg", size = 100 * 1024): #do we need try except here later?
+def picture_request(fieldname = "item_picture", type = ".jpg", maxsize = app.config["PICTURE_MAXSIZE_KB"] * 1024): #do we need try except here later?
     print("app.py's picture_request called")
     file = request.files[fieldname]
     print("app.py's picture_request file.filename =",file.filename)
     if not file or file.filename == "": return None
-    out = picture_check(file, type, size)
+    out = picture_check(file, type, maxsize)
     print("app.py's picture_request success, returning",out)
     return out
-
-def picture_converter(data):
-    if data:  return base64.b64encode(data).decode("utf-8")
-    return None
 
 def characteristics_request(): #fieldname?
     print("app.py's characteristics_request called")
@@ -150,11 +165,24 @@ def login():
     except:
         if request.method == "GET":
             print("app.py's login method get requested. session =",session.values)
+            if "csrf_token" not in session:
+                session["csrf_token"] = secrets.token_hex(16)
             return render_template("login.html")#, next_page=request.referrer)
+        
         if request.method == "POST":
-
+            check_csrf()
+            #print("csrf check succeeded")
             username = request.form["username"]
+            #print("username transfer succeede with username",username)
             password = request.form["password"]
+            #print("username transfer succeede with password",password)
+            try:
+                length_check(username, app.config["USERNAME_PASSWORD_MINLENGTH"], app.config["USERNAME_PASSWORD_MAXLENGTH"])
+                length_check(password, app.config["USERNAME_PASSWORD_MINLENGTH"], app.config["USERNAME_PASSWORD_MAXLENGTH"])
+            except:
+                print("app.py's login username or password's length are wrong!")
+                flash("VIRHE: Tarkista että sekä käyttäjätunnus että salasana on annettu oikein!")
+                return redirect("/")
             user_id = users.check_login(username, password)
             print("app.py's login method post requested. Username =", username, 'password = ',password,'user_id = ', user_id)#,'next_page = ',next_page)
             
@@ -185,14 +213,24 @@ def register():
             return render_template("register.html", filled={},)# show_flashes = False)
 
         if request.method == "POST":
-
-            username = request.form["username"]; length_check(username,3,20)
-            password1 = request.form["password1"]; length_check(password1,3,20)
-            password2 = request.form["password2"]; length_check(password2,3,20)
+            check_csrf()
+            username = request.form["username"]
+            password1 = request.form["password1"]
+            password2 = request.form["password2"]
             print("app.py's register method post requested. username = ",username, 'password1 = ',password1,'password2 = ',password2)
+            try:
+                length_check(username, app.config["USERNAME_PASSWORD_MINLENGTH"], app.config["USERNAME_PASSWORD_MAXLENGTH"])
+                length_check(password1, app.config["USERNAME_PASSWORD_MINLENGTH"], app.config["USERNAME_PASSWORD_MAXLENGTH"])
+                length_check(password2, app.config["USERNAME_PASSWORD_MINLENGTH"], app.config["USERNAME_PASSWORD_MAXLENGTH"])
+            except:
+                print("app.py's register  username or password's length are wrong!")
+                filled = {"username": username}
+                flash("VIRHE: Tarkista että sekä käyttäjätunnus että salasana on annettu oikein!")
+                return render_template("register.html", filled=filled,)# show_flashes = True)
+            
 
             if password1 != password2:
-                flash("VIRHE: Antamasi salasanat eivät ole samat")
+                flash("VIRHE: Antamasi salasanat eivät ole samat!")
                 filled = {"username": username}
                 print('not same password flash recorded. filled = ', filled)
                 return render_template("register.html", filled=filled,)# show_flashes = True)
@@ -203,7 +241,7 @@ def register():
                 print('tunnuksen onnistuminen flash recorded. redirect to /')
                 return redirect("/")
             except sqlite3.IntegrityError:
-                flash("VIRHE: Valitsemasi tunnus on jo varattu")
+                flash("VIRHE: Valitsemasi tunnus on jo varattu!")
                 filled = {"username": username}
                 print('tunnus on jo varattu flash recorded. filled = ',filled)
                 return render_template("register.html", filled=filled)# show_flashes = True)
@@ -324,10 +362,10 @@ def upload():
         print("app.py's upload method post requested.")  
         check_csrf()
 
-        item_name = request.form["item_name"]; length_check(item_name,1,100)
+        item_name = request.form["item_name"]; 
         print("app.py's upload item_name transfer successful, with item_name = ", item_name)
 
-        item_location = request.form["item_location"]; length_check(item_location,1,100)
+        item_location = request.form["item_location"]; 
         print("app.py's upload item_name transfer successful, with item_name = ", item_location)
 
         item_classifications = [int(x) for x in request.form.getlist('classification_checkbox[]')]
@@ -337,12 +375,16 @@ def upload():
         item_comment = request.form.get("item_comment")
         
         try:
+            print("app.py's upload try length_checks & item_picture check")
+            length_check(item_name,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
+            length_check(item_location,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
             item_picture = picture_request("item_picture")
+            print("app.py's upload try succeeded, with item_picture",item_picture)
         except:
-            flash("Kuvan lataus epäonnistui. Tarkista kuvan koko ja tyyppi.")
+            flash("Tavaran lataus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
             return render_template("upload.html", item_name = item_name, item_location = item_location, item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
-
-        print("app.py's upload picture transfer successful, with picture ", item_picture)
+        
+        print("app.py's upload data transfer successful")#, with picture ", item_picture)
 
         forum.upload_item(item_name = item_name, owner_id = session["user_id"],item_location = item_location, item_picture = item_picture, item_comment = item_comment, item_classifications = item_classifications, item_characteristics = item_characteristics)
 
@@ -362,7 +404,7 @@ def edit(item_id):
         
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-        item_name_location_picture_comment = forum.item_name_location_picture_comment(item_id)
+        item_name, item_location, item_picture, item_comment = forum.item_name_location_picture_comment(item_id)
         item_classifications = forum.item_classifications(item_id)
         item_characteristics = forum.item_characteristics(item_id)
         '''
@@ -378,18 +420,18 @@ def edit(item_id):
         print('..................................................')
         ##################################
         '''
-        item_picture = picture_converter(item_name_location_picture_comment[2])
-        print("app.py's edit method get data retrieve succeeded, classification_keys=",classification_keys,"item_name_location_picture_comment=",item_name_location_picture_comment,"item_classifications=",item_classifications,". Now rendering upload.html")
-        return render_template("upload.html", item_id = item_id, item_name = item_name_location_picture_comment[0],item_location = item_name_location_picture_comment[1], item_picture = item_picture, item_comment = item_name_location_picture_comment[3], classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics)
+        print("app.py's edit method get data retrieve succeeded, classification_keys=",classification_keys,"item_name", item_name,"item_location ",item_location,"item_picture",item_picture,"item_comment=",item_comment,"item_classifications=",item_classifications,". Now rendering upload.html")
+        return render_template("upload.html", item_id = item_id, item_name = item_name,item_location = item_location, item_picture = item_picture, item_comment = item_comment, classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics)
 
     if request.method == "POST":
         print("app.py's edit method post requested.")  
         check_csrf()        
 
-        item_name = request.form["item_name"]; length_check(item_name,1,100)
-        print("app.py's edit item_name transfer successful, with item_name = ", item_name)
-        item_location = request.form["item_location"]; length_check(item_name,1,100)
-        print("app.py's edit item_location transfer successful, with item_location = ", item_location)
+        item_name = request.form["item_name"]; 
+        #print("app.py's edit item_name transfer successful, with item_name = ", item_name)
+        item_location = request.form["item_location"]; 
+        #print("app.py's edit item_location transfer successful, with item_location = ", item_location)
+
         item_classifications = [int(x) for x in request.form.getlist('classification_checkbox[]')]
         print("app.py's edit classifcations transfer successful, with item_classifications = ", item_classifications)
 
@@ -398,19 +440,16 @@ def edit(item_id):
         item_comment = request.form.get("item_comment")
         
         try:
+            print("app.py's edit try length_checks & item_picture check")
+            length_check(item_name,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
+            length_check(item_location,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
             item_picture = picture_request("item_picture")
         except:
-            flash("Kuvan lataus epäonnistui. Tarkista kuvan koko ja tyyppi.")
-            return render_template("upload.html", item_id = item_id, item_name = item_name, item_location = item_location,item_picture = picture_converter(forum.item_picture(item_id)), item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
+            flash("Tavaran muokkaus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
+            return render_template("upload.html", item_id = item_id, item_name = item_name, item_location = item_location,item_picture = forum.item_picture(item_id), item_classifications = item_classifications,item_characteristics = item_characteristics, classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
 
         
         print("app.py's edit picture transfer successful, with picture ", item_picture)
-
-        if item_picture == None:
-            print("app.py's edit: user don't change picture, picture should still be the same")
-            item_picture = forum.item_picture(item_id)
-
-
         forum.edit_item(item_id=item_id,item_name=item_name,item_location = item_location, item_picture=item_picture,item_comment=item_comment,item_classifications=item_classifications,item_characteristics=item_characteristics)
 
         flash("Tavaran muokkaus onnistui")
@@ -429,9 +468,8 @@ def remove(item_id):
     if request.method == "GET": 
         print("app.py's remove method get requested")
         item_name, item_picture = forum.item_name_picture(item_id)
-        picture_b64 = picture_converter(item_picture)
         print("app.py's remove method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
-        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = picture_b64, remove = 1)
+        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = item_picture, remove = 1, prev_url = request.referrer)
 
     if request.method == "POST":
         print("app.py's remove method post requested") 
@@ -442,7 +480,10 @@ def remove(item_id):
             forum.remove_item(item_id)
             flash("Tavaran poisto onnistui")
             print("app.py's remove_item succeeded, redirecting to front_page")
-        return redirect("/front_page/")  
+            return redirect("/front_page/")  
+        else:
+            prev_url = request.form.get("prev_url", "/front_page/")
+            return redirect(prev_url)
         
 @app.route("/item/<item_id>", methods=["GET","POST"])
 def item(item_id):
@@ -453,12 +494,14 @@ def item(item_id):
         print("app.py's item method get requested, for item_id",item_id)
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-        item_name, owner_id, item_location, item_picture, item_comment = forum.item_name_ownerid_location_picture_comment(item_id)
-        item_picture = picture_converter(item_picture)
+        #item_name, owner_id, item_location, item_picture, item_comment = forum.item_name_ownerid_location_picture_comment(item_id)
+        #item_picture = picture_converter(item_picture)
         item_classifications = forum.item_classifications(item_id)
         item_characteristics = forum.item_characteristics(item_id)
-        owner_username = users.username(owner_id)
-        borrower_username, borrow_clock, borrow_date = forum.borrower_username_time(item_id)
+        #owner_username = users.username(owner_id)
+        #borrower_username, borrow_clock, borrow_date = forum.borrower_username_time(item_id)
+
+        item_name, owner_id, item_location, item_picture, item_comment, owner_username, borrower_username, borrow_clock, borrow_date = forum.item_page_data(item_id)
 
         if owner_id == int(session["user_id"]): allowed = 1
         else: allowed = None
@@ -475,9 +518,8 @@ def borrow(item_id):
     if request.method == "GET":
         print("app.py's borrow method get requested")
         item_name, item_picture = forum.item_name_picture(item_id)
-        picture_b64 = picture_converter(item_picture)
         print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
-        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = picture_b64)        
+        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = item_picture, prev_url = request.referrer)        
 
     if request.method == "POST":
         print("app.py's borrow method post requested") 
@@ -488,7 +530,10 @@ def borrow(item_id):
             forum.borrow_item(item_id,session["user_id"])
             flash("Tavaran lainaus onnistui")
             print("app.py's borrow_item succeeded, redirecting to front_page")
-        return redirect("/front_page/")  
+            return redirect("/front_page/")  
+        else:
+            prev_url = request.form.get("prev_url", "/front_page/")
+            return redirect(prev_url)
 
 @app.route("/return/<item_id>", methods=["GET","POST"])
 def ret (item_id):
@@ -501,10 +546,9 @@ def ret (item_id):
 
     if request.method == "GET":
         print("app.py's ret method get requested")
-        item_name, item_picture = forum.item_name_picture(item_id)
-        picture_b64 = picture_converter(item_picture)        
+        item_name, item_picture = forum.item_name_picture(item_id)   
         print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
-        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = picture_b64, ret = 1)        
+        return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = item_picture, ret = 1, prev_url = request.referrer)        
 
     if request.method == "POST":
         print("app.py's return method post requested") 
@@ -515,7 +559,10 @@ def ret (item_id):
             forum.return_item(item_id)
             flash("Tavaran palautus onnistui")
             print("app.py's return succeeded, redirecting to front_page")
-        return redirect("/front_page/")  
+            return redirect("/front_page/")  
+        else:
+            prev_url = request.form.get("prev_url", "/front_page/")
+            return redirect(prev_url)
 
 @app.route("/user_borrowings/", methods=["GET"])
 def user_borrowings_reroute():
@@ -533,7 +580,7 @@ def user_borrowings(user, page = 1):
     if check1: return check1
 
     if request.method == "GET":
-        print("app.py's borrowed method get requested, for user" + str(user))
+        print("app.py's borrowed method get requested, for user",str(user))
         
         borrower_id = users.user_id(user)
         user_borrowings_count = forum.user_borrowings_count(borrower_id)
@@ -562,7 +609,7 @@ def search ():
         
         try: check_query(query)
         except:
-            flash("VIRHE: varmista hakusanaa")
+            flash("VIRHE: Hakusana ei annettu!")
             return render_template("search.html")  
         
         page = request.args.get("page", 1, type=int)

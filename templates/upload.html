@@ -3,7 +3,7 @@
 {% block header %}{% if item_id %}Muokkaa Tavaran Tiedot{% else %}Lisää Tavara{% endif %}{% endblock %}
 
 {% block content %}
-Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
+Pakollisten kenttien (merkitään *-merkillä) on oltava {{ITEM_NAME_LOCATION_MINLENGTH}}-{{ITEM_NAME_LOCATION_MAXLENGTH}} merkkiä pitkiä
 {% set action_url = "/edit/" + (item_id|string) if item_id else "/upload" %}
 <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
 
@@ -13,8 +13,8 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
       id="item_name" 
       name="item_name" 
       value="{{ item_name if item_name else '' }}" 
-      minlength = "1" 
-      maxlength="100" 
+      minlength = "{{ITEM_NAME_LOCATION_MINLENGTH}}" 
+      maxlength="{{ITEM_NAME_LOCATION_MAXLENGTH}}" 
       required 
     />*
   </p>
@@ -26,7 +26,7 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
     {% else %}
       <label for="upload_item_picture">Lisää kuva</label><br />
     {% endif %}
-    <label for="upload_jpg_picture_max_100_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään 100 kt</label><br />
+    <label for="upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label><br />
     <input type="file" name="item_picture" accept=".jpg" />
 
   </p>
@@ -37,8 +37,8 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
       id="item_location" 
       name="item_location" 
       value="{{ item_location if item_location else '' }}" 
-      minlength = "1" 
-      maxlength="100" 
+      minlength = "{{ITEM_NAME_LOCATION_MINLENGTH}}" 
+      maxlength="{{ITEM_NAME_LOCATION_MAXLENGTH}}" 
       required 
     />*
   </p>

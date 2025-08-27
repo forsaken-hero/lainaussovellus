@@ -27,5 +27,6 @@
   <input type="submit" name="choice" value="Kyllä">
   <input type="submit" name="choice" value="Ei">
   <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+  <input type="hidden" name="prev_url" value="{{ prev_url }}" />
 </form>
 {% endblock %}

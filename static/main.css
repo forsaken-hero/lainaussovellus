@@ -169,6 +169,7 @@ nav li:not(:first-of-type) {
   color: #4e105b;
   padding: 0.5em 0.5em;
   text-decoration: none;
+  text-align: center;
   margin-top: 0.3em;
   margin-bottom: 0.7em;
   margin-left: auto;       /* vertical spacing + centered */

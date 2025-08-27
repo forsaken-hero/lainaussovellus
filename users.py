@@ -1,5 +1,10 @@
 from werkzeug.security import check_password_hash, generate_password_hash
-import db, app
+import db, app, base64
+
+def picture_converter(data):
+    if data:  return base64.b64encode(data).decode("utf-8")
+    return None
+
 def create_user(username, password):
     print("users.py's create_user called")
     password_hash = generate_password_hash(password)
@@ -32,7 +37,7 @@ def user_id_picture(user):
     print("users.py's user_id_picture called for user", user)
     sql = "SELECT user_id, user_picture FROM users WHERE username = ?"
     id, user_picture = db.query(sql, [user])[0]
-    picture_b64 = app.picture_converter(user_picture)
+    picture_b64 = picture_converter(user_picture)
     out = [id, picture_b64]
     print("users.py's user_id_picture done, returning", out)
     return out

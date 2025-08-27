@@ -5,20 +5,21 @@
 
 {% block content_out %}
 
-Käyttäjätunnuksen ja salasanan on oltava 3-20 merkkiä pitkiä
+Käyttäjätunnuksen ja salasanan on oltava {{USERNAME_PASSWORD_MINLENGTH}}-{{USERNAME_PASSWORD_MAXLENGTH}} merkkiä pitkiä
 <form action="/register" method="post">
   <p>
     <label for="username">Käyttäjätunnus:</label><br />
-    <input type="text" id="username" name="username" value="{{ filled.username }}" minlength = "3" maxlength="20" required />
+    <input type="text" id="username" name="username" value="{{ filled.username }}" minlength = "{{USERNAME_PASSWORD_MINLENGTH}}" maxlength="{{USERNAME_PASSWORD_MAXLENGTH}}" required />
   </p>
   <p>
     <label for="password1">Salasana:</label><br />
-    <input type="password" id="password1" name="password1" minlength = "3" maxlength="20" required />
+    <input type="password" id="password1" name="password1" minlength = "{{USERNAME_PASSWORD_MINLENGTH}}" maxlength="{{USERNAME_PASSWORD_MAXLENGTH}}" required />
   </p>
   <p>
     <label for="password2">Salasana uudestaan:</label><br />
-    <input type="password" id="password2" name="password2" minlength = "3" maxlength="20" required/>
+    <input type="password" id="password2" name="password2" minlength = "{{USERNAME_PASSWORD_MINLENGTH}}" maxlength="{{USERNAME_PASSWORD_MAXLENGTH}}" required/>
   </p>
+  <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
   <input type="submit" value="Luo tunnus" />
 </form>
 
