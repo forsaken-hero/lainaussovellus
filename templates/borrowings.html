@@ -8,20 +8,23 @@
   <p class="borrowed_main_text">
     Tällä hetkellä {{borrowed_items_count}} {% if borrowed_items_count == 1 %}tavara{% else %}tavaraa{% endif %} on lainattu varastosta:<br />
   </p>
-  {% for item in borrowed_items %}
-  <p class = "borrowed_items_list">
-    <a href="/item/{{ item[0] }}">{{ item[1] }}</a> lainaaja <a href="/user/{{item[7]}}">{{item[7]}}</a>, lainattu kello {{item[5]}} päivästä {{item[6]}} lähtien <br/>
-    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" width="50">{% endif %}
-    {% if session['user_id'] == item[4] %}
-      <a href="/return/{{ item[0] }}">Palauta</a>
-    {% endif %}
-    {% if session['user_id'] == item[2] %}
-      <a href="/edit/{{ item[0] }}">Muokkaa</a>         
-    {% endif %}
-  </p>
-  {% endfor %}
-
-  <p class="borrowed_page_nav">
+  <div class = "container">
+    {% for item in borrowed_items %}
+    <div class = "grid_container">
+      <a href="/item/{{ item[0] }}" id="item_button">{{ item[1] }}</a>
+      {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id="item_picture">{% endif %}
+      <p>Lainaaja: <a href="/user/{{item[7]}}" id="user_link">{{item[7]}}</a></p>
+      <p>Lainausaika: {{item[6]}} kello {{item[5]}}</p>
+      {% if session['user_id'] == item[4] %}
+        <a href="/return/{{ item[0] }}" id="return_button">Palauta</a>
+      {% endif %}
+      {% if session['user_id'] == item[2] %}
+        <a href="/edit/{{ item[0] }}" id="edit_button">Muokkaa</a>         
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="page_nav">
     {% if page >= 2 %}<a href="{{ url_for('borrowed', page = page - 1) }}">&lt;&lt;</a>{% endif %}
     Sivu {{ page }}/{{ page_count }}
     {% if page < page_count %}<a href="{{ url_for('borrowed', page = page + 1) }}">&gt;&gt;</a>{% endif %}

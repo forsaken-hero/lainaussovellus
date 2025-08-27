@@ -108,7 +108,7 @@ def user_borrowings(borrower_id,page = 1, page_size = 10):#indexes 0 = item_id, 
 
 def borrowed_items_count():
     print("forum.py's borrowed_items_count called")
-    sql = "SELECT COUNT(*) borrowings;"
+    sql = "SELECT COUNT(*) FROM borrowings;"
     out = db.query(sql)[0][0]
     print("forum.py's borrowed_items_count data transfer succeeded, returning", out)    
     return out    

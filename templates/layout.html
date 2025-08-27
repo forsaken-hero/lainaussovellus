@@ -16,7 +16,7 @@
           <li>
             <form action="{{ url_for('search') }}" method="GET">
               <label for="search_bar">Haku</label>
-              <input type="text" name="query" value="{{ request.args.get('query', '') }}" placeholder="Hae..." minlength="1" required>
+              <input id="search_bar" type="text" name="query" value="{{ request.args.get('query', '') }}" placeholder="Hae..." minlength="1" required>
               <input type="submit" value="Hae">
             </form>
           </li>

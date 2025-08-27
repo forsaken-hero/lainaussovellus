@@ -52,14 +52,14 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
        value= "{{ classification_key }}"
        {% if classification_key|int in item_classifications %}checked{% endif %}
       />
-      <label for="{{ classification_keys[classification_key] }}"> {{ classification_keys[classification_key] }}</label><br>
+      <label for="classification_checkbox_{{ classification_key }}"> {{ classification_keys[classification_key] }}</label><br>
     {% endfor %}
   </p>
 
   <p>
     <label for="item_characteristics">Ominaisuudet:</label><br />
     {% for characteristic_key in characteristic_keys %}
-      <label for="{{characteristic_keys[characteristic_key]}}"> {{ characteristic_keys[characteristic_key] }}</label>
+      <label for="characteristic_{{ characteristic_key }}"> {{ characteristic_keys[characteristic_key] }}</label>
       <input type="text"
        id="characteristic_{{ characteristic_key }}"
        name="characteristic_{{ characteristic_key }}"
@@ -71,7 +71,7 @@ Pakollisten kenttien (merkitään *-merkillä) on oltava 1-100 merkkiä pitkiä
 
   <p>
     <label for="item_comment">Kommentti:</label><br />
-    <textarea name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea>
+    <textarea id="item_comment" name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea>
     
   </p>
 

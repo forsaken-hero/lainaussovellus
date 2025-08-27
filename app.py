@@ -238,7 +238,7 @@ def borrowed(page = 1):
     if check1: return check1
 
     if request.method == "GET":
-        print("app.py's borrowed method get requested, for borrowed/" + str(page))
+        print("app.py's borrowed method get requested, for borrowings/" + str(page))
         
         borrowed_items_count = forum.borrowed_items_count()
         page_size = 10

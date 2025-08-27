@@ -15,7 +15,7 @@ body {
 }
 .page {
   /*background-color: white;*/
-  margin: 0em 0em 0em 10.5em;
+  margin: 0em 0em 0em 11.5em;
   padding: 1em;
 }
 .page_out{
@@ -53,18 +53,21 @@ h2{
 
 nav {
   text-align: center;
+  margin-left: -0.1em;
+
+
 }
 
 
 nav ul {
+  width: 11em;
   list-style-type: none;
   margin-top: 0;
   padding: 0;
-  width: 10em;
-  background-color: #269450;
   position: fixed;
   height: 100%;
   overflow: auto;
+  background-color: #269450;
 }
 #title {
   text-align: center;
@@ -112,21 +115,123 @@ nav li a:hover:not(.active) {
   background-color: #555;
   color: white;
 }
-
+/*
 nav li:not(:first-of-type) {
   margin-left: -0.25em;
 }
-
-nav li:not(:last-of-type) {
-  border-right: 1px solid black;
+*/
+.wrapper {
+  display: flex;
+  max-width: 35em; /* only needed on container, nav follows automatically */
+  flex-direction: column;
+  align-items: center; /* centers children horizontally */
+}
+.page_nav {
+  text-align: center;
+}
+.container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+  gap: 0.5em;
+  place-items: center; /* centers items in both axes */
+  align-items: stretch;
+  justify-items: stretch;
+  background-color: #eec222;
+  padding: 0.5em;
 }
 
-.container {
-  font-family: sans-serif;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-auto-rows: minmax(200px, auto);
-  gap: 10px;
+/* Individual item container */
+.grid_container {
+    background-color: #ffffca;
+    border: 3px solid #4a5ba8;
+    display: flex;
+    flex-direction: column; /* stack items vertically */
+    justify-content: flex-start;
+    align-items: center;     /* center horizontally */
+    width: 100%;
+    min-height: 10em;
+    padding: 0.5em;
+    box-sizing: border-box;
+    position: relative;
+}
+.button_wrapper {
+    margin-top: auto;  /* pushes the buttons to the bottom if space available */
+    text-align: center; /* center buttons inside the wrapper */
+    display: flex;
+    gap: 0.5em;        /* space between buttons */
+    flex-wrap: wrap;    /* wrap buttons if needed */
+}
+/* Item title/button */
+#item_button {
+  display: block;
+  font-family: "Lucida Console", monospace;
+  color: #4e105b;
+  padding: 0.5em 0.5em;
+  text-decoration: none;
+  margin-top: 0.3em;
+  margin-bottom: 0.7em;
+  margin-left: auto;       /* vertical spacing + centered */
+  margin-right: auto;
+  background-color: rgb(199, 255, 197);
+  width: fit-content;       /* shrink-wrap to text */
+}
+/* Item image */
+#item_picture {
+    display: block;
+    max-width: 100%;   /* responsive width */
+    height: 7em;
+    margin: 0.5em auto; /* vertical spacing + center horizontally */
+}
+
+#borrow_button {
+  display: inline-block;     
+  font-family: "Lucida Console", monospace;
+  color: #5b1010;
+  padding: 0.3em 0.5em;
+  text-decoration: none;
+  margin: 0.3em auto;       /* pushes it below image/button */
+  background-color: #ffd8d8;
+  border-radius: 4px;
+  width: fit-content;       /* shrink-wrap to text */
+}
+#edit_button {
+  display: inline-block;     
+  font-family: "Lucida Console", monospace;
+  color: #413108;
+  padding: 0.3em 0.5em;
+  text-decoration: none;
+  margin: 0.3em auto;       /* pushes it below image/button */
+  background-color: #ffe5a3;
+  border-radius: 4px;
+  width: fit-content;       /* shrink-wrap to text */
+}
+#remove_button {
+  display: inline-block;     
+  font-family: "Lucida Console", monospace;
+  color: #353535;
+  padding: 0.3em 0.5em;
+  text-decoration: none;
+  margin: 0.3em auto;       /* pushes it below image/button */
+  background-color: #c1c1c1;
+  border-radius: 4px;
+  width: fit-content;       /* shrink-wrap to text */
+}
+#return_button {
+  display: inline-block;     
+  font-family: "Lucida Console", monospace;
+  color: #14003a;
+  padding: 0.3em 0.5em;
+  text-decoration: none;
+  margin: 0.3em auto;       /* pushes it below image/button */
+  background-color: #dcd5ff;
+  border-radius: 4px;
+  width: fit-content;       /* shrink-wrap to text */
+}
+#page_button{ 
+  color:#da4d4d;
+  font-weight: bolder;
+  text-decoration: none;
 }
 /*
 .page-nav {
