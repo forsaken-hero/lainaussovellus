@@ -3,82 +3,86 @@
 {% block header %}{% if item_id %}Muokkaa Tavaran Tiedot{% else %}Lisää Tavara{% endif %}{% endblock %}
 
 {% block content %}
-Pakollisten kenttien (merkitään *-merkillä) on oltava {{ITEM_NAME_LOCATION_MINLENGTH}}-{{ITEM_NAME_LOCATION_MAXLENGTH}} merkkiä pitkiä
+<p><b>Pakollisten kenttien (merkitään *-merkillä) on oltava {{ITEM_TEXT_MINLENGTH}}-{{ITEM_TEXT_MAXLENGTH}} merkkiä pitkiä</b></p>
 {% set action_url = "/edit/" + (item_id|string) if item_id else "/upload" %}
 <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
 
-  <p>
-    <label for="item_name">Tavaran nimi:</label><br />
-    <input type="text" 
-      id="item_name" 
-      name="item_name" 
-      value="{{ item_name if item_name else '' }}" 
-      minlength = "{{ITEM_NAME_LOCATION_MINLENGTH}}" 
-      maxlength="{{ITEM_NAME_LOCATION_MAXLENGTH}}" 
-      required 
-    />*
-  </p>
+  <div class = "upload_grid">
+    <div><b><label for="item_name">Tavaran nimi:</label></b></div>
+    <div>
+      <input type="text" 
+        id="item_name" 
+        name="item_name" 
+        value="{{ item_name if item_name else '' }}" 
+        minlength = "{{ITEM_TEXT_MINLENGTH}}" 
+        maxlength="{{ITEM_TEXT_MAXLENGTH}}" 
+        required 
+      />*
+    </div>
 
-  <p>
+  
     {% if item_picture %}
-      <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" width="150"> <br />
-      <label for="change_item_picture">Muokkaa kuva</label><br />
+    <div class = "span_2"><img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" id = "page_picture"></div>
+    <div><b><label for = "item_picture">Muokkaa kuva</label></b></div>
     {% else %}
-      <label for="upload_item_picture">Lisää kuva</label><br />
+    <div><b><label for = "item_picture">Lisää kuva</label></b></div>
     {% endif %}
-    <label for="upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label><br />
-    <input type="file" name="item_picture" accept=".jpg" />
+    <div class = "upload_field">
+      <label for="upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label>
+      <p style = "margin: 0;"><input type="file" name="item_picture" id = "item_picture" accept=".jpg" /></p>
+    </div>
 
-  </p>
+    <div><b><label for = "item_location">Säilytys sijainti:</label></b></div>
+    <div>
+      <input type="text" 
+        id="item_location" 
+        name="item_location" 
+        value="{{ item_location if item_location else '' }}" 
+        minlength = "{{ITEM_TEXT_MINLENGTH}}" 
+        maxlength="{{ITEM_TEXT_MAXLENGTH}}" 
+        required 
+      />*
+    </div>
+    <div class = "span_2"></div>
+    <div><p style = "margin-top: 0.3em; margin-bottom: 0.3em;"><b>Luokkitelut:</b></p></div>
+    <div>
+      {% for classification_key in classification_keys %}
+        <p style = "margin-top: 0.3em; margin-bottom: 0.3em;">
+          <input type="checkbox"
+          id="classification_checkbox_{{ classification_key }}"
+          name="classification_checkbox[]"
+          value= "{{ classification_key }}"
+          {% if classification_key|int in item_classifications %}checked{% endif %}
+          />
+          <label for="classification_checkbox_{{ classification_key }}"> {{ classification_keys[classification_key] }}</label>
+        </p>
+      {% endfor %}
+    </div>
 
-  <p>
-    <label for="item_location">Säilytys sijainti:</label><br />
-    <input type="text" 
-      id="item_location" 
-      name="item_location" 
-      value="{{ item_location if item_location else '' }}" 
-      minlength = "{{ITEM_NAME_LOCATION_MINLENGTH}}" 
-      maxlength="{{ITEM_NAME_LOCATION_MAXLENGTH}}" 
-      required 
-    />*
-  </p>
+    <div class = "span_2"><b>Ominaisuudet:</b></div>
 
-  <p>
-    <label for="item_classifications">Luokkitelut:</label><br />
-    {% for classification_key in classification_keys %}
-      <input type="checkbox"
-       id="classification_checkbox_{{ classification_key }}"
-       name="classification_checkbox[]"
-       value= "{{ classification_key }}"
-       {% if classification_key|int in item_classifications %}checked{% endif %}
-      />
-      <label for="classification_checkbox_{{ classification_key }}"> {{ classification_keys[classification_key] }}</label><br>
-    {% endfor %}
-  </p>
 
-  <p>
-    <label for="item_characteristics">Ominaisuudet:</label><br />
     {% for characteristic_key in characteristic_keys %}
-      <label for="characteristic_{{ characteristic_key }}"> {{ characteristic_keys[characteristic_key] }}</label>
-      <input type="text"
-       id="characteristic_{{ characteristic_key }}"
-       name="characteristic_{{ characteristic_key }}"
-       value="{{ item_characteristics[characteristic_key] if item_characteristics else ''}}"
-      /><br>
+      <div class = "right_justify"><label for="characteristic_{{ characteristic_key }}">{{ characteristic_keys[characteristic_key] }}</label></div>
+      <div>
+        <input type="text"
+        id="characteristic_{{ characteristic_key }}"
+        name="characteristic_{{ characteristic_key }}"
+        value="{{ item_characteristics[characteristic_key] if item_characteristics else ''}}"
+        maxlength = "{{ITEM_TEXT_MAXLENGTH}}"
+        />
+      </div>
 
     {% endfor %}
-  </p>
+  </div>
 
-  <p>
-    <label for="item_comment">Kommentti:</label><br />
-    <textarea id="item_comment" name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea>
-    
-  </p>
+  <p><b><label for="item_comment">Kommentti:</label></b></p>
+  <p><textarea id="item_comment" name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea></p>
 
   {% if item_id %}
-    <input type="submit" value="Muokkaa" />
+    <input type="submit" value="Muokkaa" id = "edit_button"/>
   {% else %}
-    <input type="submit" value="Lisää tavara" />
+    <input type="submit" value="Lisää tavara" id = "upload_button"/>
   {% endif %}
 
   <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />

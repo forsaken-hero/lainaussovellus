@@ -3,36 +3,34 @@
 {% block header %}{% if id == session["user_id"] %}Omat Tiedot{% else %}Käyttäjä {{ user }}{% endif %}{% endblock %}
 
 {% block content %}
-{% if id == session["user_id"] %}Käyttäjätunnus: {{session["username"]}}<br />{% endif %}
+{% if id == session["user_id"] %}<p>Käyttäjätunnus: {{session["username"]}}</p>{% endif %}
+
 {% if user_picture %}
   
-  <img src="data:image/png;base64,{{ user_picture }}" alt="Käyttäjän {{ user }} kuva" width="50"><br />
+  <img src="data:image/png;base64,{{ user_picture }}" alt="Käyttäjän {{ user }} kuva" id = "page_picture"><br />
   {% set action_url = "/user/" + (user|string) %}
 
   {% if id == session["user_id"] %}
     
-    <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
-      <p> 
-        <label for = "change_user_picture">Muokkaa käyttäjäkuva</label><br />
-        <label for = "upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label><br />
-        <input type="file" name="user_picture" accept=".jpg" />
-      </p>
+    <form action="{{ action_url }}" method="POST" enctype="multipart/form-data">
+      <p><label for = "user_picture">Muokkaa käyttäjäkuva</label></p>
+      <p><label for = "upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label></p>
+      <p><input type="file" name="user_picture" accept=".jpg" /></p>
       <input type="submit" value="Muokkaa" />
       <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
     </form>
+
   {% endif %}
 
 {% else %}
 
   {% if id == session["user_id"] %}
     
-    <form action="{{ action_url }}" method="post" enctype="multipart/form-data">
-      <p> 
-        Sinulla ei ole käyttäjäkuva sovelluksessa<br />
-        <label for = "upload_user_picture">Lisää käyttäjäkuva</label><br />
-        <label for = "upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label><br />
-        <input type="file" name="user_picture" accept=".jpg" />
-      </p>
+    <form action="{{ action_url }}" method="POST" enctype="multipart/form-data">
+      <p>Sinulla ei ole käyttäjäkuva sovelluksessa</p>
+      <p><label for = "user_picture">Lisää käyttäjäkuva</label></p>
+      <p><label for = "upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label></p>
+      <p><input type="file" name="user_picture" accept=".jpg" /></p>
       <input type="submit" value="Lataa kuva" />
       <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
     </form>
@@ -42,34 +40,40 @@
 
 {% endif %}
 
-{% if user_uploads_count == 0 %}
+{% if user_uploads_count > 0 %}
 
-  {% if id == session["user_id"] %}Et{% else %}Käyttäjä {{user}} ei{% endif %} ole lisännyt sovellukseen yhtään tavaraa.
+  <p>{% if id == session["user_id"] %}Olet{% else %}Käyttäjä {{user}} on{% endif %} lisännyt sovellukseen {{user_uploads_count}} {% if user_uploads_count == 1 %}tavara{% else %}tavaraa{% endif %}.</p>
+  <div class ="item_display_wrapper">
+    <div class = "item_display_container">
+      {% for item in user_uploads %}
+        <div class = "item_display_grid">
+          <a href="/item/{{ item[0] }}" id = "item_button">{{ item[1] }}</a>
+          {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id = "item_picture">{% endif %}
+
+          <div class = "button_wrapper">
+            {% if item[4] == 1 %}<a href="/borrow/{{ item[0] }}" id = "borrow_button">Lainaa</a>{% endif %}
+            {% if session['user_id'] == item[2] %}
+              <a href="/edit/{{ item[0] }}" id = "edit_button">Muokkaa</a>      
+              <a href="/remove/{{ item[0] }}" id = "remove_button">Poista</a>      
+            {% endif %}
+          </div>
+  
+        </div>
+      {% endfor %}
+    </div>
+    <p class="page_nav">
+      {% if page >= 2 %}<a href="{{ url_for('user_page', user = user, page = page - 1) }}" id = "page_button">&lt;&lt;</a>{% endif %}
+      Sivu {{ page }}/{{ page_count }}
+      {% if page < page_count %}<a href="{{ url_for('user_page', user = user, page = page + 1) }}" id = "page_button">&gt;&gt;</a>{% endif %}
+    </p>
+  </div>
 
 {% else %}
-
-  {% if id == session["user_id"] %}Olet{% else %}Käyttäjä {{user}} on{% endif %} lisännyt sovellukseen {{user_uploads_count}} {% if user_uploads_count == 1 %}tavara{% else %}tavaraa{% endif %}.
-
-  {% for item in user_uploads %}
-  <p class = "user_page_item_list">
-    <a href="/item/{{ item[0] }}">{{ item[1] }}</a>
-    {% if item[4] == 1 %}<a href="/borrow/{{ item[0] }}">Lainaa</a>{% endif %}
-    {% if session['user_id'] == item[2] %}
-      <a href="/edit/{{ item[0] }}">Muokkaa</a>      
-      <a href="/remove/{{ item[0] }}">Poista</a>      
-    {% endif %}<br/>
-    {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" width="50">{% endif %}
-  </p>
-  {% endfor %}
-
-  <p class="user_page_page_nav">
-  {% if page >= 2 %}<a href="{{ url_for('user_page', user = user, page = page - 1) }}">&lt;&lt;</a>{% endif %}
-  Sivu {{ page }}/{{ page_count }}
-  {% if page < page_count %}<a href="{{ url_for('user_page', user = user, page = page + 1) }}">&gt;&gt;</a>{% endif %}
-  </p>
+  
+  <p>{% if id == session["user_id"] %}Et{% else %}Käyttäjä {{user}} ei{% endif %} ole lisännyt sovellukseen yhtään tavaraa.</p>
 
 {% endif %}
 
-<a href="/user_borrowings/{{ user }}">Katso {% if id == session["user_id"] %}lainaamasi{% else %}käyttäjän {{user}} lainaamat{% endif %} tavarat</a>
+<a href="/user_borrowings/{{ user }}" id = "user_borrowings_button">-> {% if id == session["user_id"] %}Lainaamasi{% else %}Käyttäjän {{user}} lainaamat{% endif %} tavarat -></a>
 
 {% endblock %}

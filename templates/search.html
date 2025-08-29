@@ -14,37 +14,44 @@
 {% if query %}
   {% if (results | length) > 0 %}
     <p class="main_text">Tulokset hakusanalla '{{query}}':</p>
+    <div class ="item_display_wrapper">
+      <div class = "item_display_container">
+        {% for key, value in results[:10] %}
+          <div class = "item_display_grid">
+            <a href="/item/{{key[0]}}" id="item_button">{{key[1]}}</a> 
+            {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" id="item_picture">{% endif %}
+            {% if value | length > 0 %}
+                <p class = "item_display_grid_text">Haun osumat</p>
+                <div class = "search_result_container">
+                  <div class = "search_result_grid">
 
-    {% for key, value in results[:10] %}
-      <br/><a href="/item/{{key[0]}}">{{key[1]}}</a> <br />
-      {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" width="50"><br/>{% endif %}
-      {% if value | length > 0 %}
-        Haun osumat:<br/>
-        {% for each in value %}
-          {{each}}: 
-          {% for text in value[each] %}
-            {% if each == "Omistaja" %}<a href="/user/{{text}}">{{text}}</a>
-            {% else %}
-              {{text}} 
+                    {% for each in value %}
+                      <div class = "right_justify">{{each}}</div><div>:</div>
+                      <div>
+                        {% for text in value[each] %}
+                          <ul class = "search left_justify wrap">{% if each == "Omistaja" %}<a href="/user/{{text}}" id = "user_link">{{text}}</a>{% else %}{{text}}{% endif %}</ul>
+                        {% endfor %}
+                      </div>
+                    {% endfor %}
+
+                  </div>
+                </div>
             {% endif %}
-            <br/>
-          {% endfor %}<br/>
-        {% endfor %}<br/>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if (page == 1) and ((results | length) <= page_size) %}
+      {% else %}
+        <p class="page_nav">
+          {% if page >= 2 %}<a href="{{ url_for('search', query = query, page = page - 1) }}" id = "page_button">&lt;&lt;</a>{% endif %}
+          Sivu {{ page }}
+          {% if (results | length) > page_size %}<a href="{{ url_for('search', query = query, page = page + 1) }}" id = "page_button">&gt;&gt;</a>{% endif %}
+        </p>
       {% endif %}
-      
-    {% endfor %}
-
-    {% if (page == 1) and ((results | length) <= page_size) %}
-    {% else %}
-      <p class="search_page_nav">
-        {% if page >= 2 %}<a href="{{ url_for('search', query = query, page = page - 1) }}">&lt;&lt;</a>{% endif %}
-        Sivu {{ page }}
-        {% if (results | length) > page_size %}<a href="{{ url_for('search', query = query, page = page + 1) }}">&gt;&gt;</a>{% endif %}
-      </p>
-    {% endif %}
-
+    </div>
   {% else %}
-    <label for="search_main_text"> Ei ole tuloksia hakusanalla '{{query}}'.</label>
+    <p for="main_text"> Ei ole tuloksia hakusanalla '{{query}}'.</p>
   {% endif %}
 {% endif %}
 

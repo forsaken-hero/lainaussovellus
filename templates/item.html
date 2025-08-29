@@ -4,31 +4,36 @@
 
 {% block content %}
 
-  {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" width="300"> <br /> {% endif %}
-  <p>
-    Omistaja: <a href="/user/{{owner_username}}">{{owner_username}}</a><br /><br />
-    Säilytys sijainti: {{item_location}}<br /><br />
-    Luokkitelut:<br />
-    {% for classification in item_classifications %}
-      {{classification_keys[classification]}}<br/>
-    {% endfor %}
-    <br />
-    Ominaisuudet:<br />
-    {% for characteristic in item_characteristics %}
-      {{characteristic_keys[characteristic]}}:  {{item_characteristics[characteristic]}}<br/>
-    {% endfor %}
-    <br />
-    Kommentti:<br/>
-    {{item_comment | show_lines if item_comment else ''}}<br/>
-    {% if borrower_username %}Tavaran on lainannut käyttäjä <a href="/user/{{borrower_username}}">{{borrower_username}}</a> kello {{borrow_clock}} päivästä {{borrow_date}} lähtien.{% endif %}
-  </p>
-  {% if allowed %}
-    <a href="/edit/{{item_id}}">Muokkaa</a> <br /> <br />
-      {% if borrower_username %}{% else %}<a href="/remove/{{item_id}}">Poista</a><br /> <br />{% endif %}
-  {% endif %}
-  {% if borrower_username %}
-  {% else %}
-    <a href="/borrow/{{item_id}}">Lainaa</a> <br /> <br />
-  {% endif %}
+  {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" id = "page_picture"> {% endif %}
+  <div class = "item_page_container">
+    <div><b>Omistaja:</b></div><div><a href="/user/{{owner_username}}" id = "user_link">{{owner_username}}</a></div>
+    <div><b>Säilytys sijainti:</b></div><div>{{item_location}}</div>
+    <div><b>Luokkitelut:</b></div>
+    <div>
+      {% for classification in item_classifications %}
+        <ul class = "classification">{{classification_keys[classification]}}</ul>
+      {% endfor %}
+    </div>
+    <div><b>Ominaisuudet:</b></div>
+    <div class = "characteristics_grid">
+      {% for characteristic in item_characteristics %}
+        <div>{{characteristic_keys[characteristic]}}:</div><div>{{item_characteristics[characteristic]}}</div>
+      {% endfor %}
+    </div>
 
+    <div><b>Kommentti:</b></div><div>{{item_comment | show_lines if item_comment else ''}}</div>
+  </div>
+  
+    {% if borrower_username %}
+      <p>{% if borrower_username == session["username"] %}Olet lainannut tämän tavaran{% else %}Tavaran on lainannut käyttäjä <a href="/user/{{borrower_username}}" id = "user_link">{{borrower_username}}</a>{% endif %} kello {{borrow_clock}} päivästä {{borrow_date}} lähtien.</p>
+    {% endif %}
+    {% if allowed %}
+      <a href="/edit/{{item_id}}" id = "edit_button">Muokkaa</a>
+        {% if borrower_username %}{% else %}<a href="/remove/{{item_id}}" id = "remove_button">Poista</a>{% endif %}
+    {% endif %}
+    {% if borrower_username %}
+    {% else %}
+      <a href="/borrow/{{item_id}}" id = "borrow_button">Lainaa</a>
+    {% endif %}
+  </p>
 {% endblock %}

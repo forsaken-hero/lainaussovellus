@@ -5,35 +5,37 @@
 {% block content %}
 
 {% if borrowed_items_count > 0 %}
-  <p class="borrowed_main_text">
-    Tällä hetkellä {{borrowed_items_count}} {% if borrowed_items_count == 1 %}tavara{% else %}tavaraa{% endif %} on lainattu varastosta:<br />
+  <p>
+    Tällä hetkellä {{borrowed_items_count}} {% if borrowed_items_count == 1 %}tavara{% else %}tavaraa{% endif %} on lainattu varastosta:
   </p>
-  <div class = "container">
-    {% for item in borrowed_items %}
-    <div class = "grid_container">
-      <a href="/item/{{ item[0] }}" id="item_button">{{ item[1] }}</a>
-      {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id="item_picture">{% endif %}
-      <p>Lainaaja: <a href="/user/{{item[7]}}" id="user_link">{{item[7]}}</a></p>
-      <p>Lainausaika: {{item[6]}} kello {{item[5]}}</p>
-      {% if session['user_id'] == item[4] %}
-        <a href="/return/{{ item[0] }}" id="return_button">Palauta</a>
-      {% endif %}
-      {% if session['user_id'] == item[2] %}
-        <a href="/edit/{{ item[0] }}" id="edit_button">Muokkaa</a>         
-      {% endif %}
+  <div class = "item_display_wrapper">
+    <div class = "item_display_container">
+      {% for item in borrowed_items %}
+      <div class = "item_display_grid">
+        <a href="/item/{{ item[0] }}" id="item_button">{{ item[1] }}</a>
+        {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id="item_picture">{% endif %}
+        <div class = "button_wrapper">
+          <p>Lainaaja: <a href="/user/{{item[7]}}" id="user_link">{{item[7]}}</a></p>
+          <p>Lainausaika: {{item[6]}} kello {{item[5]}}</p>
+          {% if session['user_id'] == item[4] %}
+            <a href="/return/{{ item[0] }}" id="return_button">Palauta</a>
+          {% endif %}
+          {% if session['user_id'] == item[2] %}
+            <a href="/edit/{{ item[0] }}" id="edit_button">Muokkaa</a>         
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
   <p class="page_nav">
-    {% if page >= 2 %}<a href="{{ url_for('borrowed', page = page - 1) }}">&lt;&lt;</a>{% endif %}
+    {% if page >= 2 %}<a href="{{ url_for('borrowings', page = page - 1) }}" id = "page_button">&lt;&lt;</a>{% endif %}
     Sivu {{ page }}/{{ page_count }}
-    {% if page < page_count %}<a href="{{ url_for('borrowed', page = page + 1) }}">&gt;&gt;</a>{% endif %}
+    {% if page < page_count %}<a href="{{ url_for('borrowings', page = page + 1) }}" id = "page_button">&gt;&gt;</a>{% endif %}
   </p>
 
-
-
 {% else %}
-  <p class="borrowed_main_text">Kaikki tavarat ovat varastossa</p>
+  <p>Kaikki tavarat ovat varastossa</p>
 {% endif %}
 
 {% endblock %}

@@ -3,16 +3,14 @@
 {% block header %}Etusivu{% endblock %}
 
 {% block content %}
-  <b>Tervetuloa, {{username}}!</b>
+  <p class = "main_text">Tervetuloa, {{username}}!</p>
   {% if available_items_count > 0 %}
-    <p class="front_page_main_text">
-      Varastossa on tällä hetkellä {{available_items_count}} {% if available_items_count == 1 %}tavara{% else %}tavaraa{% endif %}.
-      Saatavilla olevat tavarat varastossa:
-    </p>
-    <div class ="wrapper">
-      <div class = "container">
+    <p>Varastossa on tällä hetkellä {{available_items_count}} {% if available_items_count == 1 %}tavara{% else %}tavaraa{% endif %}.</p>
+    <p>Saatavilla olevat tavarat varastossa:</p>
+    <div class ="item_display_wrapper">
+      <div class = "item_display_container">
         {% for item in available_items %}
-          <div class = "grid_container">
+          <div class = "item_display_grid">
             <a href="/item/{{ item[0] }}" id="item_button">{{ item[1] }}</a>
             {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id="item_picture">{% endif %}
             <div class = "button_wrapper">
@@ -35,7 +33,7 @@
 
 
   {% else %}
-    <p class="front_page_main_text">Varasto on tällä hetkellä tyhjä.</p>
+    <p>Varasto on tällä hetkellä tyhjä.</p>
   {% endif %}
 
 {% endblock %}

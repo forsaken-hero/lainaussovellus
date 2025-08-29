@@ -19,7 +19,7 @@
 <p>
   Haluatko {% if ret %}palauttaa{% elif remove %}poistaa{% else %}lainata{% endif %} {{item_name}}?
 </p>
-{% if item_picture %}  <img src="data:image/png;base64,{{ item_picture }}" width="50"><br />{% endif %}
+{% if item_picture %}  <img src="data:image/png;base64,{{ item_picture }}" id = "page_picture"><br />{% endif %}
 
 {% set action_url = ("/return/" if ret else ("/remove/" if remove else "/borrow/")) ~ item_id %}
 

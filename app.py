@@ -9,8 +9,8 @@ app.secret_key = config.secret_key
 app.config["USERNAME_PASSWORD_MINLENGTH"] = 3
 app.config["USERNAME_PASSWORD_MAXLENGTH"] = 20
 app.config["PICTURE_MAXSIZE_KB"] = 100
-app.config["ITEM_NAME_LOCATION_MINLENGTH"] = 1
-app.config["ITEM_NAME_LOCATION_MAXLENGTH"] = 100
+app.config["ITEM_TEXT_MINLENGTH"] = 1
+app.config["ITEM_TEXT_MAXLENGTH"] = 80
 
 
 @app.context_processor
@@ -19,8 +19,8 @@ def inject_data():
         USERNAME_PASSWORD_MINLENGTH=app.config["USERNAME_PASSWORD_MINLENGTH"],
         USERNAME_PASSWORD_MAXLENGTH=app.config["USERNAME_PASSWORD_MAXLENGTH"],
         PICTURE_MAXSIZE_KB=app.config["PICTURE_MAXSIZE_KB"],
-        ITEM_NAME_LOCATION_MINLENGTH = app.config["ITEM_NAME_LOCATION_MINLENGTH"],
-        ITEM_NAME_LOCATION_MAXLENGTH = app.config["ITEM_NAME_LOCATION_MAXLENGTH"]
+        ITEM_TEXT_MINLENGTH = app.config["ITEM_TEXT_MINLENGTH"],
+        ITEM_TEXT_MAXLENGTH = app.config["ITEM_TEXT_MAXLENGTH"]
     )
 
 @app.before_request
@@ -38,6 +38,10 @@ def show_lines(content):
     content = str(markupsafe.escape(content))
     content = content.replace("\n", "<br />")
     return markupsafe.Markup(content)
+
+@app.teardown_appcontext #Flask automatically calls the @app.teardown_appcontext function after each request — whether it succeeded or failed.
+def teardown_db(exception):
+    db.close_connection()
 
 def require_login():
     print("app.py's require_login called")
@@ -96,13 +100,13 @@ def length_check(string,a,b):
     print("app.py's length_check called, checking string",string,"is it between",a,"-",b)
     if len(string) < a or len(string) > b:
         print('raise exception since length_check for',string,' not between',a,'-',b)
-        raise Exception("VIRHE: virheellinen syötteen pituus!") 
+        raise ValueError("VIRHE: virheellinen syötteen pituus!") 
 
 def check_query(query):
     print("app.py's check_query called, checking query", query)
     if not query:
         print('raise exception in check_query for query',query,)
-        raise Exception("VIRHE: hakusana ei annettu!") 
+        raise ValueError("VIRHE: hakusana ei annettu!") 
 
 
 def picture_check(file,type = ".jpg", maxsize = app.config["PICTURE_MAXSIZE_KB"] * 1024)  :
@@ -123,9 +127,8 @@ def picture_request(fieldname = "item_picture", type = ".jpg", maxsize = app.con
     print("app.py's picture_request success, returning",out)
     return out
 
-def characteristics_request(): #fieldname?
+def characteristics_request(form_base = "characteristic_", maxlength = app.config["ITEM_TEXT_MAXLENGTH"]): #fieldname?
     print("app.py's characteristics_request called")
-    form_base = "characteristic_"
     form_id = 0
     characteristics = {}
     while True:
@@ -138,6 +141,10 @@ def characteristics_request(): #fieldname?
             print("app.py's upload POST while's request form failed!")
             break
         if not characteristic_value: continue
+        
+        print("app.py's characteristics_request check if length value is bigger than", maxlength)
+        length_check(characteristic_value,0,maxlength)
+        print("app.py's characteristics_request length_check passed")
         characteristics[form_id] = characteristic_value
         print("app.py's upload characteristics updated for form_id",form_id,", characteristic_value",characteristic_value,"characteristics now",characteristics)
     return characteristics
@@ -155,6 +162,7 @@ def refresh_keys():
     characteristic_keys = forum.characteristic_keys()
 
 '''
+######################################################################APPLICATION##############################################################
 @app.route("/", methods=["GET", "POST"])
 def login():
     try:
@@ -271,7 +279,7 @@ def front_page(page = 1):
 
 @app.route("/borrowings/", methods=["GET","POST"])
 @app.route("/borrowings/<int:page>", methods=["GET","POST"])
-def borrowed(page = 1):
+def borrowings(page = 1):
     check1 = login_check()
     if check1: return check1
 
@@ -370,14 +378,21 @@ def upload():
 
         item_classifications = [int(x) for x in request.form.getlist('classification_checkbox[]')]
         print("app.py's upload classifcations transfer successful, with item_classifications = ", item_classifications) #data produced such as item_classifications =  ['2', '6', '8']
-        item_characteristics = characteristics_request()
-        print("app.py's upload characteristics_request transfer successful, with item_characteristics = ", item_characteristics)#data produced such as item_characteristics =  {2: 'ff', 5: 'efefe'}
         item_comment = request.form.get("item_comment")
+        try:
+            print("app.py's upload try to get item_characteristics") 
+            item_characteristics = characteristics_request()
+            print("app.py's upload try for item_characteristics succeeded!") 
+        except: 
+            print("app.py's upload except: item_characteristics length too long!") 
+            flash("VIRHE: Virheellinen ominaisuuksien syötteen pituus!")
+            return render_template("upload.html", item_name = item_name, item_location = item_location, item_classifications = item_classifications,classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
+        print("app.py's upload characteristics_request transfer successful, with item_characteristics = ", item_characteristics)#data produced such as item_characteristics =  {2: 'ff', 5: 'efefe'}
         
         try:
             print("app.py's upload try length_checks & item_picture check")
-            length_check(item_name,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
-            length_check(item_location,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
+            length_check(item_name,app.config["ITEM_TEXT_MINLENGTH"],app.config["ITEM_TEXT_MAXLENGTH"])
+            length_check(item_location,app.config["ITEM_TEXT_MINLENGTH"],app.config["ITEM_TEXT_MAXLENGTH"])
             item_picture = picture_request("item_picture")
             print("app.py's upload try succeeded, with item_picture",item_picture)
         except:
@@ -392,7 +407,7 @@ def upload():
         print("app.py's upload succeeded, flash recorded. Redirecting to front_page")
         return redirect("/front_page/")
 
-@app.route("/edit/<item_id>", methods=["GET","POST"])
+@app.route("/edit/<int:item_id>", methods=["GET","POST"])
 def edit(item_id):
     check1 = login_check()
     if check1: return check1
@@ -435,14 +450,22 @@ def edit(item_id):
         item_classifications = [int(x) for x in request.form.getlist('classification_checkbox[]')]
         print("app.py's edit classifcations transfer successful, with item_classifications = ", item_classifications)
 
-        item_characteristics = characteristics_request()
-        print("app.py's edit ccharacteristics transfer successful, with characteristics = ", item_characteristics)
         item_comment = request.form.get("item_comment")
-        
+
+        try:
+            print("app.py's upload try to get item_characteristics") 
+            item_characteristics = characteristics_request()
+            print("app.py's upload try for item_characteristics succeeded!") 
+        except: 
+            print("app.py's upload except: item_characteristics length too long!") 
+            flash("VIRHE: Virheellinen ominaisuuksien syötteen pituus!")
+            return render_template("upload.html", item_id = item_id, item_name = item_name, item_location = item_location, item_classifications = item_classifications,classification_keys = forum.classification_keys(), characteristic_keys = forum.characteristic_keys(), item_comment = item_comment)
+        print("app.py's upload characteristics_request transfer successful, with item_characteristics = ", item_characteristics)#data produced such as item_characteristics =  {2: 'ff', 5: 'efefe'}
+
         try:
             print("app.py's edit try length_checks & item_picture check")
-            length_check(item_name,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
-            length_check(item_location,app.config["ITEM_NAME_LOCATION_MINLENGTH"],app.config["ITEM_NAME_LOCATION_MAXLENGTH"])
+            length_check(item_name,app.config["ITEM_TEXT_MINLENGTH"],app.config["ITEM_TEXT_MAXLENGTH"])
+            length_check(item_location,app.config["ITEM_TEXT_MINLENGTH"],app.config["ITEM_TEXT_MAXLENGTH"])
             item_picture = picture_request("item_picture")
         except:
             flash("Tavaran muokkaus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
@@ -456,7 +479,7 @@ def edit(item_id):
         print("app.py's edit_item succeeded, flash recorded")
         return redirect("/front_page/")  
 
-@app.route("/remove/<item_id>", methods=["GET","POST"])
+@app.route("/remove/<int:item_id>", methods=["GET","POST"])
 def remove(item_id):
     check1 = login_check()
     if check1: return check1
@@ -485,7 +508,7 @@ def remove(item_id):
             prev_url = request.form.get("prev_url", "/front_page/")
             return redirect(prev_url)
         
-@app.route("/item/<item_id>", methods=["GET","POST"])
+@app.route("/item/<int:item_id>", methods=["GET","POST"])
 def item(item_id):
     check1 = login_check()
     if check1: return check1
@@ -508,7 +531,7 @@ def item(item_id):
         print("app.py's item method get data requests done, with item_name =",item_name,", owner_id =",owner_id," item_picture = ",item_picture,", item_comment = ",item_comment,",owner_username = ",owner_username,",allowed=",allowed)
         return render_template("item.html", item_id = item_id,item_name = item_name,item_location = item_location,owner_username = owner_username, item_picture = item_picture, item_comment=item_comment,classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics,  allowed = allowed, borrower_username = borrower_username, borrow_date = borrow_date, borrow_clock = borrow_clock)
 
-@app.route("/borrow/<item_id>", methods=["GET","POST"])
+@app.route("/borrow/<int:item_id>", methods=["GET","POST"])
 def borrow(item_id):
     check1 = login_check()
     if check1: return check1
@@ -535,7 +558,7 @@ def borrow(item_id):
             prev_url = request.form.get("prev_url", "/front_page/")
             return redirect(prev_url)
 
-@app.route("/return/<item_id>", methods=["GET","POST"])
+@app.route("/return/<int:item_id>", methods=["GET","POST"])
 def ret (item_id):
     check1 = login_check()
     if check1: return check1
@@ -664,9 +687,7 @@ def logout():
 
 
 
-@app.teardown_appcontext #Flask automatically calls the @app.teardown_appcontext function after each request — whether it succeeded or failed.
-def teardown_db(exception):
-    db.close_connection()
+
 
 
 

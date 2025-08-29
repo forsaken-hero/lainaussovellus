@@ -6,14 +6,14 @@ def picture_converter(data):
     if data:  return base64.b64encode(data).decode("utf-8")
     return None
 
-def comment_formatter(query, match_value):
+def formatter(query, match_value, length = 10):
     print("forum.py's comment_formatter, processing kommentti")
     index = match_value.find(query)
     if index == -1:
         formatted = ""
     else:
-        start = max(0, index - 5)
-        end = index + len(query) + 5
+        start = max(0, index - length)
+        end = index + len(query) + length
         cut = match_value[start:end]
         formatted = f"{'...' if start > 0 else ''}{cut}{'...' if end < len(match_value) else ''}"
     match_value = formatted
@@ -463,7 +463,7 @@ def search(query, page = 1, page_size = 10):
     for result in results:
         item_id, item_name, item_picture, match_origin, match_value = result
         picture_b64 = picture_converter(item_picture)
-        if match_origin == "Kommentti": match_value = comment_formatter(query, match_value)
+        if match_origin == "Kommentti" or match_origin == "Sijainti": match_value = formatter(query, match_value)
         key = (item_id, item_name, picture_b64)
         if key not in out: #if the item not yet in out
             #print("(item_id, item_name, picture_b64)",key," not yet in out, out now",out)
