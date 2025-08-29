@@ -286,7 +286,17 @@ def remove_item(item_id):
     sql = "DELETE FROM items WHERE item_id = ?"
     db.execute(sql,[item_id])
     print("forum.py's remove_item succeed")
-
+def remove_item_picture(item_id):
+    print("forum.py's remove_item_picture called for item_id", item_id) 
+    sql = "UPDATE items SET item_picture = NULL WHERE item_id = ?"
+    db.execute(sql,[item_id])
+    print("forum.py's remove_item_picture done")   
+def has_no_item_picture(item_id):
+    print("forum.py's has_no_item_picture called for item_id", item_id)
+    sql = "SELECT item_picture IS NULL AS has_no_item_picture FROM items WHERE item_id = ?;"
+    out = db.query(sql, [item_id])[0][0]
+    print("users.py's has_no_item_picture done, returning", out)
+    return out
 def classification_keys(): #returns dictionary of the id: classification_name
     print("forum.py's classification_keys called")
     sql = "SELECT classification_keys_id, classification_name FROM classification_keys"

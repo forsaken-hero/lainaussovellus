@@ -49,7 +49,7 @@ def user_picture(user_id):
     return out
 def has_no_picture(user_id):
     print("users.py's has_picture called for user", user_id)
-    sql = "SELECT user_picture IS NULL AS has_picture FROM users WHERE user_id = ?;"
+    sql = "SELECT user_picture IS NULL AS has_no_picture FROM users WHERE user_id = ?;"
     out = db.query(sql, [user_id])[0][0]
     print("users.py's has_picture done, returning", out)
     return out

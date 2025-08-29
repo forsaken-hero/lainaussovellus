@@ -155,7 +155,12 @@ def user_picture_check():
         print("app.py's user_picture_check no user picture!")
         flash("Sinulla ei ole käyttäjäkuvaa!")
         return redirect("/user/" + str(session["username"]))
-        
+def item_picture_check(item_id):
+    print("app.py's item_picture_check called for item_id", item_id)
+    if forum.has_no_item_picture(item_id):
+        print("app.py's item_picture_check for item_id",item_id,"has no picture!")
+        flash("Ei ole tavarakuvaa!")
+        return redirect("/item/" + str(item_id))        
 
 ''' approach to make global
 @app.before_first_request
@@ -386,7 +391,36 @@ def remove_user_picture():
             print("app.py's remove_user_picture succeeded, redirecting to user_page")
         return redirect("/user/" + session["username"])  
 
-        
+
+@app.route("/remove_item_picture/", methods=["GET","POST"])
+@app.route("/remove_item_picture/<int:item_id>", methods=["GET","POST"])
+def remove_item_picture(item_id):
+    check1 = login_check()
+    if check1: return check1
+    check2 = check_owner_id(item_id)
+    if check2: return check2
+    check3 = item_picture_check(item_id)
+    if check3: return check3
+
+    if request.method == "GET":
+        print("app.py's remove_item_picture method get called")
+        item_name, item_picture = forum.item_name_picture(item_id)
+        print("app.py's remove_item_picture done, rendering confirmation.html")
+        return render_template("confirmation.html", item_id = item_id, item_name = item_name, item_picture = item_picture, remove_item_picture = 1, prev_url = request.referrer)
+
+    if request.method == "POST":
+        print("app.py's remove_item_picture method post requested") 
+        check_csrf()            
+        choice = request.form.get("choice")
+        if choice == "Kyllä":
+            print("app.py's remove_item_picture kylla button pressed")
+            forum.remove_item_picture(item_id)
+            flash("Tavarakuvan poisto onnistui")
+            print("app.py's remove_item_picture succeeded, redirecting to user_page")
+            return redirect("/item/" + str(item_id))  
+        else:
+            prev_url = request.form.get("prev_url", "/item/" + str(item_id))
+            return redirect(prev_url)        
 
 
 @app.route("/upload", methods=["GET","POST"])#upload.html sends item_name & csrf_token

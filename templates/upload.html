@@ -30,8 +30,9 @@
     <div>
       <label for="upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label>
       <p style = "margin: 0;"><input type="file" name="item_picture" id = "item_picture" accept=".jpg" /></p>
+    
+      {% if item_picture %}<a href="/remove_item_picture/{{item_id}}" class = "page_remove_picture_button">Poista tavarakuva</a>{% endif %}
     </div>
-
     <div><b><label for = "item_location">Säilytys sijainti:</label></b></div>
     <div>
       <input type="text" 

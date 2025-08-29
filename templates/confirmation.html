@@ -4,6 +4,7 @@
   {% if ret %}Palautusvahvistus
   {% elif remove %}Poistovahvistus
   {% elif remove_user_picture %}Käyttäjäkuvan poistovahvistus
+  {% elif remove_item_picture %}Tavarakuvan poistovahvistus
   {% else %}Lainausvahvistus
   {% endif %}
 {% endblock %}
@@ -11,6 +12,7 @@
   {% if ret %}Palautusvahvistus 
   {% elif remove %}Poistovahvistus 
   {% elif remove_user_picture %}Käyttäjäkuvan poistovahvistus
+  {% elif remove_item_picture %}Tavarakuvan poistovahvistus
   {% else %}Lainausvahvistus 
   {% endif %}
 {% endblock %}
@@ -20,13 +22,21 @@
 <p>
   {% if remove_user_picture %}
     Haluatko poistaa käyttäjäkuvasi?
+  {% elif remove_item_picture %}
+    Haluatko poistaa tavaran {{item_name}} kuva?
   {% else %}
     Haluatko {% if ret %}palauttaa{% elif remove %}poistaa{% else %}lainata{% endif %} {{item_name}}?
   {% endif %}
 </p>
 {% if item_picture %}  <img src="data:image/png;base64,{{ item_picture }}" id = "page_picture"><br />{% endif %}
 
-{% set action_url = "/remove_user_picture" if remove_user_picture else (("/return/" if ret else ("/remove/" if remove else "/borrow/")) ~ item_id) %}
+{% set action_url = 
+  "/remove_user_picture" if remove_user_picture 
+  else ("/remove_item_picture/" ~ item_id) if remove_item_picture 
+  else ("/return/" ~ item_id) if ret 
+  else ("/remove/" ~ item_id) if remove 
+  else ("/borrow/" ~ item_id) 
+%}
 
 <form method="POST" action="{{ action_url }}">
   <input type="submit" name="choice" value="Kyllä">
