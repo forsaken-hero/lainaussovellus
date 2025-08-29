@@ -11,23 +11,25 @@
       <div class = "item_display_container">
         {% for item in available_items %}
           <div class = "item_display_grid">
-            <a href="/item/{{ item[0] }}" id="item_button">{{ item[1] }}</a>
-            {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id="item_picture">{% endif %}
-            <div class = "button_wrapper">
-              <a href="/borrow/{{ item[0] }}" id="borrow_button">Lainaa</a>
-              {% if session['user_id'] == item[2] %}
-                <a href="/edit/{{ item[0] }}" id="edit_button">Muokkaa</a>  
-                <a href="/remove/{{ item[0] }}" id="remove_button">Poista</a>
-              {% endif %}
+            <a href="/item/{{ item[0] }}" class="item_button">{{ item[1] }}</a>
+            {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" class="item_picture">{% endif %}
+            <div class = "pusher">
+              <div class = "button_wrapper">
+                <a href="/borrow/{{ item[0] }}" class="borrow button">Lainaa</a>
+                {% if session['user_id'] == item[2] %}
+                  <a href="/edit/{{ item[0] }}" class="edit button">Muokkaa</a>  
+                  <a href="/remove/{{ item[0] }}" class="remove button">Poista</a>
+                {% endif %}
+              </div>
             </div>
           </div>
         {% endfor %}
       </div>
       
       <p class="page_nav">
-        {% if page >= 2 %}<a href="{{ url_for('front_page', page = page - 1) }}" id="page_button">&lt;&lt;</a>{% endif %}
+        {% if page >= 2 %}<a href="{{ url_for('front_page', page = page - 1) }}" class="page_button">&lt;&lt;</a>{% endif %}
         Sivu {{ page }}/{{ page_count }}
-        {% if page < page_count %}<a href="{{ url_for('front_page', page = page + 1) }}" id="page_button">&gt;&gt;</a>{% endif %}
+        {% if page < page_count %}<a href="{{ url_for('front_page', page = page + 1) }}" class="page_button">&gt;&gt;</a>{% endif %}
       </p>
     </div>
 

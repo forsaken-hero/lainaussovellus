@@ -5,32 +5,36 @@
 {% block content %}
 
 {% if user_borrowings_count > 0 %}
-  <p>{% if borrower_id == session['user_id'] %}Olet{% else %}Käyttäjä <a href="/user/{{user}}" id = "user_link">{{user}}</a> on{% endif %} lainannut {{user_borrowings_count}} {% if user_borrowings_count == 1 %}tavara{% else %}tavaraa{% endif %} varastosta:</p>
+  <p>{% if borrower_id == session['user_id'] %}Olet{% else %}Käyttäjä <a href="/user/{{user}}" class = "user_link">{{user}}</a> on{% endif %} lainannut {{user_borrowings_count}} {% if user_borrowings_count == 1 %}tavara{% else %}tavaraa{% endif %} varastosta:</p>
   <div class ="item_display_wrapper">
     <div class = "item_display_container">
       {% for item in user_borrowings %}
         <div class = "item_display_grid">
-          <a href="/item/{{ item[0] }}" id = "item_button">{{ item[1] }}</a>
-          {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" id = "item_picture">{% endif %}
-          <div class = "button_wrapper">
+          <a href="/item/{{ item[0] }}" class = "item_button">{{ item[1] }}</a>
+          {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" class = "item_picture">{% endif %}
+          <div class = "pusher">
             <p class = "item_display_grid_text">lainattu kello {{item[4]}} päivästä {{item[5]}} lähtien</p>
-            {% if borrower_id == session['user_id'] %}<a href="/return/{{ item[0] }}" id = "return_button">Palauta</a>{% endif %}
-            {% if item[2] == session['user_id'] %}<a href="/edit/{{ item[0] }}" id = "edit_button">Muokkaa</a>{% endif %}  
+            <div class = "button_wrapper">
+              {% if borrower_id == session['user_id'] %}<a href="/return/{{ item[0] }}" class = "return button">Palauta</a>{% endif %}
+              {% if item[2] == session['user_id'] %}<a href="/edit/{{ item[0] }}" class = "edit button">Muokkaa</a>{% endif %}  
+            </div>
           </div>
         </div>
       {% endfor %}
     </div>
     <p class="page_nav">
-      {% if page >= 2 %}<a href="{{ url_for('user_borrowings', user = user, page = page - 1) }}" id = "page_button">&lt;&lt;</a>{% endif %}
+      {% if page >= 2 %}<a href="{{ url_for('user_borrowings', user = user, page = page - 1) }}" class = "page_button">&lt;&lt;</a>{% endif %}
       Sivu {{ page }}/{{ page_count }}
-      {% if page < page_count %}<a href="{{ url_for('user_borrowings', user = user, page = page + 1) }}" id = "page_button">&gt;&gt;</a>{% endif %}
+      {% if page < page_count %}<a href="{{ url_for('user_borrowings', user = user, page = page + 1) }}" class = "page_button">&gt;&gt;</a>{% endif %}
     </p>
   
   </div>
 
 
 {% else %}
-  <p>{% if borrower_id == session['user_id'] %}Et ole{% else %}Käyttäjä <a href="/user/{{user}}" id ="user_link">{{user}}</a> ei ole{% endif %} lainannut yhtään tavaraa varastosta.</p>
+  <p>{% if borrower_id == session['user_id'] %}Et ole{% else %}Käyttäjä <a href="/user/{{user}}" class ="user_link">{{user}}</a> ei ole{% endif %} lainannut yhtään tavaraa varastosta.</p>
 {% endif %}
+
+<a href="/user/{{ user }}" class = "user_borrowings_button">-> {% if borrower_id == session["user_id"] %}Lisäämäsi{% else %}Käyttäjän {{user}} lisäämät{% endif %} tavarat -></a>
 
 {% endblock %}

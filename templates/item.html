@@ -5,7 +5,7 @@
 {% block content %}
 
   {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" id = "page_picture"> {% endif %}
-  <div class = "item_page_container">
+  <div class = "item_page_container bottom_spacer">
     <div><b>Omistaja:</b></div><div><a href="/user/{{owner_username}}" id = "user_link">{{owner_username}}</a></div>
     <div><b>Säilytys sijainti:</b></div><div>{{item_location}}</div>
     <div><b>Luokkitelut:</b></div>
@@ -28,12 +28,13 @@
       <p>{% if borrower_username == session["username"] %}Olet lainannut tämän tavaran{% else %}Tavaran on lainannut käyttäjä <a href="/user/{{borrower_username}}" id = "user_link">{{borrower_username}}</a>{% endif %} kello {{borrow_clock}} päivästä {{borrow_date}} lähtien.</p>
     {% endif %}
     {% if allowed %}
-      <a href="/edit/{{item_id}}" id = "edit_button">Muokkaa</a>
-        {% if borrower_username %}{% else %}<a href="/remove/{{item_id}}" id = "remove_button">Poista</a>{% endif %}
+      <a href="/edit/{{item_id}}" class = "edit button">Muokkaa</a>
+        {% if borrower_username %}{% else %}<a href="/remove/{{item_id}}" class = "remove button">Poista</a>{% endif %}
     {% endif %}
     {% if borrower_username %}
+      {% if borrower_username == session["username"] %}<a href="/return/{{item_id}}" class = "return button">Palauta</a>{% endif %}
     {% else %}
-      <a href="/borrow/{{item_id}}" id = "borrow_button">Lainaa</a>
+      <a href="/borrow/{{item_id}}" class = "borrow button">Lainaa</a>
     {% endif %}
   </p>
 {% endblock %}

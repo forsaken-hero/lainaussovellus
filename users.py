@@ -41,7 +41,18 @@ def user_id_picture(user):
     out = [id, picture_b64]
     print("users.py's user_id_picture done, returning", out)
     return out
-
+def user_picture(user_id):
+    print("users.py's user_picture called for user_id", user_id)
+    sql = "SELECT user_picture FROM users WHERE user_id = ?"
+    out = picture_converter(db.query(sql, [user_id])[0][0])
+    print("users.py's user_picture done, returning", out)
+    return out
+def has_no_picture(user_id):
+    print("users.py's has_picture called for user", user_id)
+    sql = "SELECT user_picture IS NULL AS has_picture FROM users WHERE user_id = ?;"
+    out = db.query(sql, [user_id])[0][0]
+    print("users.py's has_picture done, returning", out)
+    return out
 def user_id(user):
     print("users.py's user_id called for user", user)
     sql = "SELECT user_id FROM users WHERE username = ?"
@@ -53,4 +64,10 @@ def upload_picture(user_id, user_picture = None):
     print("users.py's upload_picture called for user_id", user_id, "picture to be uploaded ", user_picture) 
     sql = "UPDATE users SET user_picture = ? WHERE user_id = ?"
     db.execute(sql,[user_picture,user_id])
-    print("forum.py's update_item done")    
+    print("users.py's update_item done")    
+
+def remove_picture(user_id):
+    print("users.py's delete_picture called for user_id", user_id) 
+    sql = "UPDATE users SET user_picture = NULL WHERE user_id = ?"
+    db.execute(sql,[user_id])
+    print("users.py's delete_picture done")    

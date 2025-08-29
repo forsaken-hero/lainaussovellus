@@ -231,23 +231,29 @@ ul.classification, ul.search{
 }
 
 .button_wrapper {
+  border: 2px solid red;
   text-align: center; /* center buttons inside the wrapper */
   display: flex;
   gap: 0.5em;        /* space between buttons */
   flex-wrap: wrap;    /* wrap buttons if needed */
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 .pusher{
-  border: 2px solid green;
+  display: block;
+  width: 100%;
   margin-top: auto;
 }
-.button_wrapper > p{
-  margin-top: 0;
-  margin-bottom: 0;
+.pusher > p{
+  text-align: center;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
   margin-left: auto;
   margin-right: auto;
 }
 /* Item title/button */
-#item_button {
+.item_button {
   display: flex;
   font-family: "Lucida Console", monospace;
   color: #4e105b;
@@ -265,8 +271,23 @@ ul.classification, ul.search{
   white-space: normal;
 
 }
+.page_remove_picture_button{
+  display: inline-block;
+  text-decoration: none;
+  font-family: system-ui, sans-serif;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  margin-left: 0;
+  margin-right: 0;
+  font-size:small;
+  padding: 2px 4px;
+  background-color: #f0f0f0;
+  color: #000;
+  border: 1px solid black;
+  border-radius: 3px;
+}
 /* Item image */
-#item_picture {
+.item_picture {
   width: 100%;        /* scale width to container */
   max-height: 7em;       /* height scales proportionally */
   object-fit: contain; /* ensures entire image fits inside box */
@@ -280,70 +301,47 @@ ul.classification, ul.search{
   max-height: 12em;       /* height scales proportionally */
   object-fit: contain; /* ensures entire image fits inside box */
   display: block;     /* removes inline spacing issues */
-  margin-bottom: 1em;
+  margin-bottom: 0.2em;
   object-position: left top;
 }
-#borrow_button {
+.button {
   display: inline-block;     
   font-family: "Lucida Console", monospace;
+  padding: 0.3em 0.5em;
+  text-decoration: none;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-radius: 4px;
+  width: fit-content;       /* shrink-wrap to text */
+}
+.borrow{
   color: #5b1010;
-  padding: 0.3em 0.5em;
-  text-decoration: none;
-  margin: 0.3em auto;       /* pushes it below image/button */
   background-color: #ffd8d8;
-  border-radius: 4px;
-  width: fit-content;       /* shrink-wrap to text */
 }
-#edit_button {
-  display: inline-block;     
-  font-family: "Lucida Console", monospace;
+.edit {
   color: #413108;
-  padding: 0.3em 0.5em;
-  text-decoration: none;
-  margin: 0.3em auto;       /* pushes it below image/button */
   background-color: #ffe5a3;
-  border-radius: 4px;
-  width: fit-content;       /* shrink-wrap to text */
 }
-#upload_button {
-  display: inline-block;     
-  font-family: "Lucida Console", monospace;
+.upload{
   color: #024600;
-  padding: 0.3em 0.5em;
-  text-decoration: none;
-  margin: 0.3em auto;       /* pushes it below image/button */
   background-color: #95ff89;
-  border-radius: 4px;
-  width: fit-content;       /* shrink-wrap to text */
 }
-#remove_button {
-  display: inline-block;     
-  font-family: "Lucida Console", monospace;
+.remove{
   color: #353535;
-  padding: 0.3em 0.5em;
-  text-decoration: none;
-  margin: 0.3em auto;       /* pushes it below image/button */
   background-color: #c1c1c1;
-  border-radius: 4px;
-  width: fit-content;       /* shrink-wrap to text */
 }
-#return_button {
-  display: inline-block;     
-  font-family: "Lucida Console", monospace;
+.return {
   color: #14003a;
-  padding: 0.3em 0.5em;
-  text-decoration: none;
-  margin: 0.3em auto;       /* pushes it below image/button */
   background-color: #dcd5ff;
-  border-radius: 4px;
-  width: fit-content;       /* shrink-wrap to text */
 }
-#page_button{ 
+.page_button{ 
   color:#da4d4d;
   font-weight: bolder;
   text-decoration: none;
 }
-#user_borrowings_button{
+.user_borrowings_button{
   display: block;
   margin-top: auto;
   margin-left: auto;
@@ -372,7 +370,18 @@ ul.classification, ul.search{
   margin-top:0;
   margin-bottom:0;
 }
-
+.flashes{
+  font-style: italic;
+  font-family:'Times New Roman', Times, serif;
+  font-size:large;
+  margin-bottom: 0.5em;
+}
+.top_spacer{
+  margin-top: 1.5em;
+}
+.bottom_spacer{
+  margin-bottom: 1.5em;
+}
 /*
 .page-nav {
   text-align: center;

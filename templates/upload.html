@@ -27,7 +27,7 @@
     {% else %}
     <div><b><label for = "item_picture">Lisää kuva</label></b></div>
     {% endif %}
-    <div class = "upload_field">
+    <div>
       <label for="upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label>
       <p style = "margin: 0;"><input type="file" name="item_picture" id = "item_picture" accept=".jpg" /></p>
     </div>
@@ -80,9 +80,9 @@
   <p><textarea id="item_comment" name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea></p>
 
   {% if item_id %}
-    <input type="submit" value="Muokkaa" id = "edit_button"/>
+    <input type="submit" value="Muokkaa" class = "edit button"/>
   {% else %}
-    <input type="submit" value="Lisää tavara" id = "upload_button"/>
+    <input type="submit" value="Lisää tavara" class = "upload button"/>
   {% endif %}
 
   <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />

@@ -149,6 +149,14 @@ def characteristics_request(form_base = "characteristic_", maxlength = app.confi
         print("app.py's upload characteristics updated for form_id",form_id,", characteristic_value",characteristic_value,"characteristics now",characteristics)
     return characteristics
 
+def user_picture_check():
+    print("app.py's user_picture_check called")
+    if users.has_no_picture(session["user_id"]):
+        print("app.py's user_picture_check no user picture!")
+        flash("Sinulla ei ole käyttäjäkuvaa!")
+        return redirect("/user/" + str(session["username"]))
+        
+
 ''' approach to make global
 @app.before_first_request
 def load_keys():
@@ -333,8 +341,8 @@ def user_page(user, page = 1):
         if page > page_count:
             return redirect("/user/" + user + "/" + str(page_count))
 
-        print("app.py's user_page method get finished, rendering user_page.html")
-        return render_template("user_page.html", id = id, user = user, user_picture = user_picture, user_uploads_count = user_uploads_count, user_uploads = forum.user_uploads(id, page, page_size), page = page, page_count = page_count)
+        print("app.py's user_page method get finished, rendering user.html")
+        return render_template("user.html", id = id, user = user, user_picture = user_picture, user_uploads_count = user_uploads_count, user_uploads = forum.user_uploads(id, page, page_size), page = page, page_count = page_count)
 
     if request.method == "POST":
         print("app.py's user_page method post requested, for user/" + user + "/" + str(page))
@@ -353,6 +361,32 @@ def user_page(user, page = 1):
 
         flash("Käyttäjäkuvan lataus onnistui.")
         return redirect("/user/" + session["username"])
+
+@app.route("/remove_user_picture", methods=["GET","POST"])#upload.html sends item_name & csrf_token
+def remove_user_picture():
+    check1 = login_check()
+    if check1: return check1
+    check2 = user_picture_check()
+    if check2: return check2
+
+    if request.method == "GET":
+        print("app.py's remove_user_picture method get called")
+        user_picture = users.user_picture(session["user_id"])
+        print("app.py's remove_user_picture done, rendering confirmation.html")
+        return render_template("confirmation.html", item_picture = user_picture, remove_user_picture = 1, prev_url = request.referrer)
+
+    if request.method == "POST":
+        print("app.py's remove_user_picture method post requested") 
+        check_csrf()            
+        choice = request.form.get("choice")
+        if choice == "Kyllä":
+            print("app.py's remove_user_picture kylla button pressed")
+            users.remove_picture(session["user_id"])
+            flash("Käyttäjäkuvan poisto onnistui")
+            print("app.py's remove_user_picture succeeded, redirecting to user_page")
+        return redirect("/user/" + session["username"])  
+
+        
 
 
 @app.route("/upload", methods=["GET","POST"])#upload.html sends item_name & csrf_token
@@ -401,11 +435,11 @@ def upload():
         
         print("app.py's upload data transfer successful")#, with picture ", item_picture)
 
-        forum.upload_item(item_name = item_name, owner_id = session["user_id"],item_location = item_location, item_picture = item_picture, item_comment = item_comment, item_classifications = item_classifications, item_characteristics = item_characteristics)
+        item_id = forum.upload_item(item_name = item_name, owner_id = session["user_id"],item_location = item_location, item_picture = item_picture, item_comment = item_comment, item_classifications = item_classifications, item_characteristics = item_characteristics)
 
         flash("Tavaran lisäys onnistui")
-        print("app.py's upload succeeded, flash recorded. Redirecting to front_page")
-        return redirect("/front_page/")
+        print("app.py's upload succeeded, flash recorded. Redirecting to item_page for item_id",item_id)
+        return redirect("/item/" + str(item_id))
 
 @app.route("/edit/<int:item_id>", methods=["GET","POST"])
 def edit(item_id):
@@ -476,8 +510,8 @@ def edit(item_id):
         forum.edit_item(item_id=item_id,item_name=item_name,item_location = item_location, item_picture=item_picture,item_comment=item_comment,item_classifications=item_classifications,item_characteristics=item_characteristics)
 
         flash("Tavaran muokkaus onnistui")
-        print("app.py's edit_item succeeded, flash recorded")
-        return redirect("/front_page/")  
+        print("app.py's edit_item succeeded, flash recorded & redirects to item_page for item_id", item_id)
+        return redirect("/item/" + str(item_id))  
 
 @app.route("/remove/<int:item_id>", methods=["GET","POST"])
 def remove(item_id):

@@ -18,9 +18,10 @@
       <div class = "item_display_container">
         {% for key, value in results[:10] %}
           <div class = "item_display_grid">
-            <a href="/item/{{key[0]}}" id="item_button">{{key[1]}}</a> 
-            {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" id="item_picture">{% endif %}
+            <a href="/item/{{key[0]}}" class="item_button">{{key[1]}}</a> 
+            {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" class="item_picture">{% endif %}
             {% if value | length > 0 %}
+              <div class = "pusher">
                 <p class = "item_display_grid_text">Haun osumat</p>
                 <div class = "search_result_container">
                   <div class = "search_result_grid">
@@ -36,6 +37,7 @@
 
                   </div>
                 </div>
+              </div>
             {% endif %}
           </div>
         {% endfor %}
@@ -44,9 +46,9 @@
       {% if (page == 1) and ((results | length) <= page_size) %}
       {% else %}
         <p class="page_nav">
-          {% if page >= 2 %}<a href="{{ url_for('search', query = query, page = page - 1) }}" id = "page_button">&lt;&lt;</a>{% endif %}
+          {% if page >= 2 %}<a href="{{ url_for('search', query = query, page = page - 1) }}" class = "page_button">&lt;&lt;</a>{% endif %}
           Sivu {{ page }}
-          {% if (results | length) > page_size %}<a href="{{ url_for('search', query = query, page = page + 1) }}" id = "page_button">&gt;&gt;</a>{% endif %}
+          {% if (results | length) > page_size %}<a href="{{ url_for('search', query = query, page = page + 1) }}" class = "page_button">&gt;&gt;</a>{% endif %}
         </p>
       {% endif %}
     </div>

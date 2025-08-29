@@ -3,25 +3,30 @@
 {% block title %}
   {% if ret %}Palautusvahvistus
   {% elif remove %}Poistovahvistus
+  {% elif remove_user_picture %}Käyttäjäkuvan poistovahvistus
   {% else %}Lainausvahvistus
   {% endif %}
 {% endblock %}
 {% block header %}
-  {% if ret %}Palauta 
-  {% elif remove %}Poista 
-  {% else %}Lainaa 
+  {% if ret %}Palautusvahvistus 
+  {% elif remove %}Poistovahvistus 
+  {% elif remove_user_picture %}Käyttäjäkuvan poistovahvistus
+  {% else %}Lainausvahvistus 
   {% endif %}
-  {{item_name}}
 {% endblock %}
 
 {% block content %}
 
 <p>
-  Haluatko {% if ret %}palauttaa{% elif remove %}poistaa{% else %}lainata{% endif %} {{item_name}}?
+  {% if remove_user_picture %}
+    Haluatko poistaa käyttäjäkuvasi?
+  {% else %}
+    Haluatko {% if ret %}palauttaa{% elif remove %}poistaa{% else %}lainata{% endif %} {{item_name}}?
+  {% endif %}
 </p>
 {% if item_picture %}  <img src="data:image/png;base64,{{ item_picture }}" id = "page_picture"><br />{% endif %}
 
-{% set action_url = ("/return/" if ret else ("/remove/" if remove else "/borrow/")) ~ item_id %}
+{% set action_url = "/remove_user_picture" if remove_user_picture else (("/return/" if ret else ("/remove/" if remove else "/borrow/")) ~ item_id) %}
 
 <form method="POST" action="{{ action_url }}">
   <input type="submit" name="choice" value="Kyllä">
