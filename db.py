@@ -10,7 +10,9 @@ def get_connection():
         g.db.row_factory = sqlite3.Row
     return g.db
 
-def execute(sql, params=[], con=None):
+def execute(sql, params=None, con=None):
+    if params is None:
+        params = []
     if con is None:
         con = get_connection()
         result = con.execute(sql, params)
@@ -23,7 +25,9 @@ def execute(sql, params=[], con=None):
 def commit(con):
     con.commit()
 
-def query(sql, params=[]):
+def query(sql, params=None):
+    if params is None:
+        params = []
     con = get_connection()
     result = con.execute(sql, params).fetchall()
     return result
