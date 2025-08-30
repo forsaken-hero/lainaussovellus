@@ -39,9 +39,11 @@ def user_picture(user_id):
     return picture
 
 def has_no_picture(user_id):
-    sql = """SELECT user_picture IS NULL AS has_no_picture
-             FROM users 
-             WHERE user_id = ?"""
+    sql = """
+        SELECT user_picture IS NULL AS has_no_picture
+        FROM users 
+        WHERE user_id = ?
+    """
     return db.query(sql, [user_id])[0][0]
 
 def user_id(user):
