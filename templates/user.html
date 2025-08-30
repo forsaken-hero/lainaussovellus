@@ -49,14 +49,14 @@
     <div class = "item_display_container">
       {% for item in user_uploads %}
         <div class = "item_display_grid">
-          <a href="/item/{{ item[0] }}" class = "item_button">{{ item[1] }}</a>
-          {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" class = "item_picture">{% endif %}
+          <a href="/item/{{ item['item_id'] }}" class = "item_button">{{ item['item_name'] }}</a>
+          {% if item['item_picture'] %}<img src="data:image/png;base64,{{ item['item_picture'] }}" alt="Tavaran {{ item['item_name'] }} kuva" class = "item_picture">{% endif %}
           <div class = "pusher">
             <div class = "button_wrapper">
-              {% if item[4] == 1 %}{% else %}<a href="/borrow/{{ item[0] }}" class = "borrow button">Lainaa</a>{% endif %}
-              {% if session['user_id'] == item[2] %}
-                <a href="/edit/{{ item[0] }}" class = "edit button">Muokkaa</a>      
-                <a href="/remove/{{ item[0] }}" class = "remove button">Poista</a>      
+              {% if item['available'] == 1 %}{% else %}<a href="/borrow/{{ item['item_id'] }}" class = "borrow button">Lainaa</a>{% endif %}
+              {% if session['user_id'] == item['owner_id'] %}
+                <a href="/edit/{{ item['item_id'] }}" class = "edit button">Muokkaa</a>      
+                <a href="/remove/{{ item['item_id'] }}" class = "remove button">Poista</a>      
               {% endif %}
             </div>
           </div>

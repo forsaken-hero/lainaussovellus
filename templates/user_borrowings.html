@@ -10,13 +10,13 @@
     <div class = "item_display_container">
       {% for item in user_borrowings %}
         <div class = "item_display_grid">
-          <a href="/item/{{ item[0] }}" class = "item_button">{{ item[1] }}</a>
-          {% if item[3] %}<img src="data:image/png;base64,{{ item[3] }}" alt="Tavaran {{ item[1] }} kuva" class = "item_picture">{% endif %}
+          <a href="/item/{{ item['item_id'] }}" class = "item_button">{{ item['item_name'] }}</a>
+          {% if item['item_picture'] %}<img src="data:image/png;base64,{{ item['item_picture'] }}" alt="Tavaran {{ item['item_name'] }} kuva" class = "item_picture">{% endif %}
           <div class = "pusher">
-            <p class = "item_display_grid_text">lainattu kello {{item[4]}} päivästä {{item[5]}} lähtien</p>
+            <p class = "item_display_grid_text">Lainausaika: {{item['borrow_date']}} kello {{item['borrow_clock']}}</p>
             <div class = "button_wrapper">
-              {% if borrower_id == session['user_id'] %}<a href="/return/{{ item[0] }}" class = "return button">Palauta</a>{% endif %}
-              {% if item[2] == session['user_id'] %}<a href="/edit/{{ item[0] }}" class = "edit button">Muokkaa</a>{% endif %}  
+              {% if borrower_id == session['user_id'] %}<a href="/return/{{ item['item_id'] }}" class = "return button">Palauta</a>{% endif %}
+              {% if item['owner_id'] == session['user_id'] %}<a href="/edit/{{ item['item_id'] }}" class = "edit button">Muokkaa</a>{% endif %}  
             </div>
           </div>
         </div>

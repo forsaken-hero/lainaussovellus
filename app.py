@@ -1,4 +1,12 @@
-import math, secrets, sqlite3, db, config, forum, users, markupsafe, base64, time
+import math
+import secrets
+import sqlite3
+import db
+import config
+import forum
+import users
+import markupsafe
+import time
 from flask import Flask, abort, flash, make_response, redirect, render_template, request, session, g
 from werkzeug.exceptions import Forbidden
 #from werkzeug.utils import secure_filename
@@ -75,7 +83,7 @@ def borrow_check(item_id):
 
 def return_check(item_id):
     print("app.py's return_check called for item_id",item_id)
-    if forum.is_borrowed(item_id) == None:
+    if forum.is_borrowed(item_id) is None:
         flash("Tavara on jo varastossa!")
         print("app.py's return_check flash recorded, redirecting to frontpage")
         return redirect("/front_page/")      
@@ -404,7 +412,9 @@ def remove_item_picture(item_id):
 
     if request.method == "GET":
         print("app.py's remove_item_picture method get called")
-        item_name, item_picture = forum.item_name_picture(item_id)
+        data = forum.item_name_picture(item_id)
+        item_name = data["item_name"]
+        item_picture = data["item_picture"]
         print("app.py's remove_item_picture done, rendering confirmation.html")
         return render_template("confirmation.html", item_id = item_id, item_name = item_name, item_picture = item_picture, remove_item_picture = 1, prev_url = request.referrer)
 
@@ -487,7 +497,11 @@ def edit(item_id):
         
         classification_keys = forum.classification_keys()
         characteristic_keys = forum.characteristic_keys()
-        item_name, item_location, item_picture, item_comment = forum.item_name_location_picture_comment(item_id)
+        data = forum.edit_page_data(item_id)
+        item_name = data["item_name"]
+        item_location = data["item_location"]
+        item_picture = data["item_picture"]
+        item_comment = data["item_comment"]
         item_classifications = forum.item_classifications(item_id)
         item_characteristics = forum.item_characteristics(item_id)
         '''
@@ -558,7 +572,9 @@ def remove(item_id):
 
     if request.method == "GET": 
         print("app.py's remove method get requested")
-        item_name, item_picture = forum.item_name_picture(item_id)
+        data = forum.item_name_picture(item_id)
+        item_name = data["item_name"]
+        item_picture = data["item_picture"]
         print("app.py's remove method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
         return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = item_picture, remove = 1, prev_url = request.referrer)
 
@@ -592,11 +608,22 @@ def item(item_id):
         #owner_username = users.username(owner_id)
         #borrower_username, borrow_clock, borrow_date = forum.borrower_username_time(item_id)
 
-        item_name, owner_id, item_location, item_picture, item_comment, owner_username, borrower_username, borrow_clock, borrow_date = forum.item_page_data(item_id)
+        data = forum.item_page_data(item_id)
+        item_name = data["item_name"]
+        owner_id = data["owner_id"]
+        item_location = data["item_location"]
+        item_picture = data["item_picture"]
+        item_comment = data["item_comment"]
+        owner_username = data["owner_username"]
+        borrower_username = data["borrower_username"]
+        borrow_clock = data["borrow_clock"]
+        borrow_date = data["borrow_date"]
 
-        if owner_id == int(session["user_id"]): allowed = 1
-        else: allowed = None
-        print("app.py's item method get data requests done, with item_name =",item_name,", owner_id =",owner_id," item_picture = ",item_picture,", item_comment = ",item_comment,",owner_username = ",owner_username,",allowed=",allowed)
+        if owner_id == int(session["user_id"]):
+            allowed = 1
+        else:
+            allowed = None
+
         return render_template("item.html", item_id = item_id,item_name = item_name,item_location = item_location,owner_username = owner_username, item_picture = item_picture, item_comment=item_comment,classification_keys = classification_keys, characteristic_keys = characteristic_keys, item_classifications = item_classifications, item_characteristics = item_characteristics,  allowed = allowed, borrower_username = borrower_username, borrow_date = borrow_date, borrow_clock = borrow_clock)
 
 @app.route("/borrow/<int:item_id>", methods=["GET","POST"])
@@ -608,7 +635,9 @@ def borrow(item_id):
 
     if request.method == "GET":
         print("app.py's borrow method get requested")
-        item_name, item_picture = forum.item_name_picture(item_id)
+        data = forum.item_name_picture(item_id)
+        item_name = data["item_name"]
+        item_picture = data["item_picture"]
         print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
         return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = item_picture, prev_url = request.referrer)        
 
@@ -637,7 +666,9 @@ def ret (item_id):
 
     if request.method == "GET":
         print("app.py's ret method get requested")
-        item_name, item_picture = forum.item_name_picture(item_id)   
+        data = forum.item_name_picture(item_id)   
+        item_name = data["item_name"]
+        item_picture = data["item_picture"]
         print("app.py's borrow method get data retrieve succeeded, item_name =",item_name,". Now rendering confirmation.html")
         return render_template("confirmation.html", item_id=item_id, item_name = item_name, item_picture = item_picture, ret = 1, prev_url = request.referrer)        
 

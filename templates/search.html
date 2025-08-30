@@ -18,8 +18,8 @@
       <div class = "item_display_container">
         {% for key, value in results[:10] %}
           <div class = "item_display_grid">
-            <a href="/item/{{key[0]}}" class="item_button">{{key[1]}}</a> 
-            {% if key[2] %}<img src="data:image/png;base64,{{ key[2] }}" alt="Tavaran {{ key[1] }} kuva" class="item_picture">{% endif %}
+            <a href="/item/{{key['item_id']}}" class="item_button">{{key['item_name']}}</a> 
+            {% if key['item_picture'] %}<img src="data:image/png;base64,{{ key['item_picture'] }}" alt="Tavaran {{ key['item_name'] }} kuva" class="item_picture">{% endif %}
             {% if value | length > 0 %}
               <div class = "pusher">
                 <p class = "item_display_grid_text">Haun osumat</p>
@@ -39,14 +39,14 @@
                 </div>
 
                 <div class = "button_wrapper">
-                  {% if key[3] == session["user_id"] %}
-                    <a href="/edit/{{ key[0] }}" class="edit button">Muokkaa</a>  
-                    {% if key[4] %}{% else %}<a href="/remove/{{ key[0] }}" class="remove button">Poista</a>{% endif %}
+                  {% if key['owner_id'] == session["user_id"] %}
+                    <a href="/edit/{{ key['item_id'] }}" class="edit button">Muokkaa</a>  
+                    {% if key['borrower_id'] %}{% else %}<a href="/remove/{{ key['item_id'] }}" class="remove button">Poista</a>{% endif %}
                   {% endif %}
-                  {% if key[4] %}
-                    {% if key[4] == session["user_id"] %}<a href="/return/{{ key[0] }}" class = "return button">Palauta</a>{% endif %}
+                  {% if key['borrower_id'] %}
+                    {% if key['borrower_id'] == session["user_id"] %}<a href="/return/{{ key['item_id'] }}" class = "return button">Palauta</a>{% endif %}
                   {% else %}
-                    <a href="/borrow/{{ key[0] }}" class="borrow button">Lainaa</a>
+                    <a href="/borrow/{{ key['item_id'] }}" class="borrow button">Lainaa</a>
                   {% endif %}
                 </div>
 
