@@ -6,8 +6,8 @@
 
 <form action="{{ url_for('search') }}" method="GET">
   <p>
-    <label for="search_bar">Hae:</label>
-    <input type="text" id="search_bar" name="query" value = "{{query if query else '' }}" minlength = "1" placeholder="Hae..." required> <input type="submit" value="Hae">
+    <label for="search_bar_page">Hae:</label>
+    <input type="text" id="search_bar_page" name="query" value = "{{query if query else '' }}" minlength = "1" placeholder="Hae..." required> <input type="submit" value="Hae">
   </p>
 </form>
 
@@ -37,6 +37,19 @@
 
                   </div>
                 </div>
+
+                <div class = "button_wrapper">
+                  {% if key[3] == session["user_id"] %}
+                    <a href="/edit/{{ key[0] }}" class="edit button">Muokkaa</a>  
+                    {% if key[4] %}{% else %}<a href="/remove/{{ key[0] }}" class="remove button">Poista</a>{% endif %}
+                  {% endif %}
+                  {% if key[4] %}
+                    {% if key[4] == session["user_id"] %}<a href="/return/{{ key[0] }}" class = "return button">Palauta</a>{% endif %}
+                  {% else %}
+                    <a href="/borrow/{{ key[0] }}" class="borrow button">Lainaa</a>
+                  {% endif %}
+                </div>
+
               </div>
             {% endif %}
           </div>

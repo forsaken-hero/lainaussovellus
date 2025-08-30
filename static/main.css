@@ -132,6 +132,7 @@ nav li:not(:first-of-type) {
 .item_display_wrapper {
   display: flex;
   flex-direction: column;
+  max-width: 50em;
 }
 
 .item_display_container {
@@ -207,15 +208,23 @@ ul.classification, ul.search{
   grid-template-columns: 7em auto;
   gap: 0.3em;
 }
-.search_result_grid{
+.search_result_grid {
   gap: 0.3em;
   display: grid;
-  grid-template-columns: minmax(auto,50%) 0.5em minmax(50%,auto);
+  grid-template-columns: minmax(min-content, calc(50% - 0.25em)) 0.5em minmax(calc(50% - 0.25em),max-content);
+}
+
+.search_result_grid > :nth-child(1){
+  min-width: min-content;
+}
+.search_result_grid > :nth-child(3) {
+  min-width: 0; /* allow both to shrink/wrap properly */
 }
 
 .search_result_container{
   display: block;
   width: 100%;
+  margin-bottom: 0.5em;
 }
 .item_display_grid_text{
   margin-bottom: 0.3em;
@@ -231,7 +240,6 @@ ul.classification, ul.search{
 }
 
 .button_wrapper {
-  border: 2px solid red;
   text-align: center; /* center buttons inside the wrapper */
   display: flex;
   gap: 0.5em;        /* space between buttons */
@@ -381,6 +389,9 @@ ul.classification, ul.search{
 }
 .bottom_spacer{
   margin-bottom: 1.5em;
+}
+#search_bar_page{
+  width:50%;
 }
 /*
 .page-nav {

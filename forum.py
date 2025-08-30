@@ -402,54 +402,60 @@ def search(query, page = 1, page_size = 10):
     form of the output
     [
     (
-    (item_id, item_name, item_picture),{match_origin:[match_value]}
+    (item_id, item_name, item_picture, owner_id, borrower_id),{match_origin:[match_value]}
     ),
     (
-    (item_id, item_name, item_picture),{match_origin:[match_value]}
+    (item_id, item_name, item_picture, owner_id, borrower_id),{match_origin:[match_value]}
     ), ...
     ]
     '''
     print("forum.py's search called for query",query)
-    sql = """WITH matches AS (
-        SELECT i.item_id, i.item_name, i.item_picture, 'Omistaja' AS match_origin, u.username AS match_value
-        FROM users u
-        JOIN items i ON u.user_id = i.owner_id
-        WHERE u.username LIKE ?
+    sql = """WITH base_items AS (
+    SELECT 
+        i.item_id,
+        i.item_name,
+        i.item_picture,
+        i.owner_id,
+        u.username AS owner_username,
+        i.item_location,
+        i.item_comment
+    FROM items i
+    JOIN users u ON u.user_id = i.owner_id
+    ),
+    matches AS (
+        SELECT item_id, item_name, item_picture, owner_id, 'Omistaja' AS match_origin, owner_username AS match_value
+        FROM base_items
+        WHERE owner_username LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, i.item_picture, 'Tavaran nimi' AS match_origin, i.item_name AS match_value 
-        FROM users u
-        JOIN items i ON u.user_id = i.owner_id
-        WHERE i.item_name LIKE ?
+        SELECT item_id, item_name, item_picture, owner_id, 'Tavaran nimi', item_name
+        FROM base_items
+        WHERE item_name LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, i.item_picture, 'Sijainti' AS match_origin, i.item_location AS match_value 
-        FROM users u
-        JOIN items i ON u.user_id = i.owner_id
-        WHERE i.item_location LIKE ?
+        SELECT item_id, item_name, item_picture, owner_id, 'Sijainti', item_location
+        FROM base_items
+        WHERE item_location LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, i.item_picture, 'Kommentti' AS match_origin, i.item_comment AS match_value
-        FROM users u
-        JOIN items i ON u.user_id = i.owner_id
-        WHERE i.item_comment LIKE ?
+        SELECT item_id, item_name, item_picture, owner_id, 'Kommentti', item_comment
+        FROM base_items
+        WHERE item_comment LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, i.item_picture, 'Ominaisuudet' AS match_origin, c.characteristic_value AS match_value
-        FROM users u
-        JOIN items i ON u.user_id = i.owner_id
+        SELECT i.item_id, i.item_name, i.item_picture, i.owner_id, 'Ominaisuudet', c.characteristic_value
+        FROM base_items i
         JOIN characteristics c ON i.item_id = c.item_id
         WHERE c.characteristic_value LIKE ?
 
         UNION ALL
 
-        SELECT i.item_id, i.item_name, i.item_picture, 'Luokitellut' AS match_origin, clk.classification_name AS match_value
-        FROM users u
-        JOIN items i ON u.user_id = i.owner_id
+        SELECT i.item_id, i.item_name, i.item_picture, i.owner_id, 'Luokitellut', clk.classification_name
+        FROM base_items i
         JOIN classifications cl ON i.item_id = cl.item_id
         JOIN classification_keys clk ON cl.classification_keys_id = clk.classification_keys_id
         WHERE clk.classification_name LIKE ?
@@ -460,8 +466,9 @@ def search(query, page = 1, page_size = 10):
         ORDER BY item_id ASC
         LIMIT ? OFFSET ?
     )
-    SELECT m.*
+    SELECT m.*, b.borrower_id
     FROM matches m
+    LEFT JOIN borrowings b ON m.item_id = b.item_id
     JOIN first_ids f ON m.item_id = f.item_id
     ORDER BY m.item_id ASC;
     """
@@ -471,10 +478,10 @@ def search(query, page = 1, page_size = 10):
     results = db.query(sql, [que,que,que,que,que,que,limit,offset])
     out = {}
     for result in results:
-        item_id, item_name, item_picture, match_origin, match_value = result
+        item_id, item_name, item_picture, owner_id, match_origin, match_value, borrower_id = result
         picture_b64 = picture_converter(item_picture)
-        if match_origin == "Kommentti" or match_origin == "Sijainti": match_value = formatter(query, match_value)
-        key = (item_id, item_name, picture_b64)
+        if match_origin == "Kommentti" or match_origin == "Sijainti" or match_origin == "Ominaisuudet": match_value = formatter(query, match_value)
+        key = (item_id, item_name, picture_b64, owner_id, borrower_id)
         if key not in out: #if the item not yet in out
             #print("(item_id, item_name, picture_b64)",key," not yet in out, out now",out)
             out[key] = {}
