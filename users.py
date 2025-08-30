@@ -30,7 +30,10 @@ def user_id_picture(user):
     sql = "SELECT user_id, user_picture FROM users WHERE username = ?"
     id, user_picture = db.query(sql, [user])[0]
     picture_b64 = picture_converter(user_picture)
-    return [id, picture_b64]
+    return {
+        "id": id,
+        "user_picture": picture_b64,
+    }
 
 def user_picture(user_id):
     sql = "SELECT user_picture FROM users WHERE user_id = ?"

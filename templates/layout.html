@@ -25,7 +25,12 @@
           <li><a href="/user_borrowings/{{session['username']}}">Minun lainaukseni</a></li>
           <li><a href="/borrowings">Lainatut tavarat</a></li>
           <li><a href="/user/{{session['username']}}">Käyttäjätiedot</a></li>
-          <li><a href="/logout">Kirjaudu ulos</a></li>
+          <li>
+            <form method="POST" action="/logout">
+              <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+              <button type="submit" id = "logout_button">Kirjaudu ulos</button>
+            </form>
+          </li>
       </ul>
     </nav>
   </div>

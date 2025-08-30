@@ -53,11 +53,17 @@
           {% if item['item_picture'] %}<img src="data:image/png;base64,{{ item['item_picture'] }}" alt="Tavaran {{ item['item_name'] }} kuva" class = "item_picture">{% endif %}
           <div class = "pusher">
             <div class = "button_wrapper">
-              {% if item['available'] == 1 %}{% else %}<a href="/borrow/{{ item['item_id'] }}" class = "borrow button">Lainaa</a>{% endif %}
-              {% if session['user_id'] == item['owner_id'] %}
+              
+              {% if item['owner_id'] == session['user_id'] %}
                 <a href="/edit/{{ item['item_id'] }}" class = "edit button">Muokkaa</a>      
-                <a href="/remove/{{ item['item_id'] }}" class = "remove button">Poista</a>      
+                {% if item['borrower_id'] %}{% else %}<a href="/remove/{{ item['item_id'] }}" class = "remove button">Poista</a>{% endif %}
               {% endif %}
+              {% if item['borrower_id'] %}
+                {% if item['borrower_id'] == session['user_id'] %}<a href="/return/{{ item['item_id'] }}" class = "return button">Palauta</a>{% endif %}
+              {% else %}
+                <a href="/borrow/{{ item['item_id'] }}" class = "borrow button">Lainaa</a>
+              {% endif %}
+                
             </div>
           </div>
         </div>

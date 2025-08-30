@@ -20,24 +20,25 @@
           <div class = "item_display_grid">
             <a href="/item/{{key['item_id']}}" class="item_button">{{key['item_name']}}</a> 
             {% if key['item_picture'] %}<img src="data:image/png;base64,{{ key['item_picture'] }}" alt="Tavaran {{ key['item_name'] }} kuva" class="item_picture">{% endif %}
-            {% if value | length > 0 %}
               <div class = "pusher">
-                <p class = "item_display_grid_text">Haun osumat</p>
-                <div class = "search_result_container">
-                  <div class = "search_result_grid">
+                {% if value | length > 0 %}
+                
+                  <p class = "item_display_grid_text">Haun osumat</p>
+                  <div class = "search_result_container">
+                    <div class = "search_result_grid">
 
-                    {% for each in value %}
-                      <div class = "right_justify">{{each}}</div><div>:</div>
-                      <div>
-                        {% for text in value[each] %}
-                          <ul class = "search left_justify wrap">{% if each == "Omistaja" %}<a href="/user/{{text}}" id = "user_link">{{text}}</a>{% else %}{{text}}{% endif %}</ul>
-                        {% endfor %}
-                      </div>
-                    {% endfor %}
+                      {% for each in value %}
+                        <div class = "right_justify">{{each}}</div><div>:</div>
+                        <div>
+                          {% for text in value[each] %}
+                            <ul class = "search left_justify wrap">{% if each == "Omistaja" %}<a href="/user/{{text}}" id = "user_link">{{text}}</a>{% else %}{{text}}{% endif %}</ul>
+                          {% endfor %}
+                        </div>
+                      {% endfor %}
 
+                    </div>
                   </div>
-                </div>
-
+                {% endif %}
                 <div class = "button_wrapper">
                   {% if key['owner_id'] == session["user_id"] %}
                     <a href="/edit/{{ key['item_id'] }}" class="edit button">Muokkaa</a>  
@@ -51,7 +52,7 @@
                 </div>
 
               </div>
-            {% endif %}
+            
           </div>
         {% endfor %}
       </div>

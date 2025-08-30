@@ -120,11 +120,7 @@ nav li a:hover:not(.active) {
   background-color: #555;
   color: white;
 }
-/*
-nav li:not(:first-of-type) {
-  margin-left: -0.25em;
-}
-*/
+
 
 .page_nav {
   text-align: center;
@@ -393,22 +389,23 @@ ul.classification, ul.search{
 #search_bar_page{
   width:50%;
 }
-/*
-.page-nav {
-  text-align: center;
+#logout_button{
+  display: block;
+  color: #ecede9;
+  padding: 0.5em 1em;
+  text-decoration: none;   /* has no effect on button, but harmless */
+  margin-top: 1em;
+  border: none;            /* remove default browser border */
+  background: none;        /* start clean so hover/active work */
+  cursor: pointer;         /* make it feel like a button */
+  font: inherit;           /* inherit nav font */
+  width: 100%;
 }
-
-.message, .thread {
-  border: 2px solid black;
-  margin: 1em;
-  padding: 0.2em 0.5em;
-}
-
-.info {
-  border: 2px solid black;
-  margin: 1em;
-  padding: 0.5em;
-  background-color: blue;
+#logout_button.active {
+  background-color: #04AA6D;
   color: white;
 }
-*/
+#logout_button:hover:not(.active) {
+  background-color: #555;
+  color: white;
+}

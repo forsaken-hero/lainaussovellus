@@ -161,10 +161,9 @@ def user_uploads(owner_id, page=1, page_size=10):
                i.item_name,
                i.owner_id,
                i.item_picture,
-               CASE WHEN EXISTS (
-                   SELECT 1 FROM borrowings b WHERE b.item_id = i.item_id
-               ) THEN 1 ELSE 0 END AS has_borrowing
+               b.borrower_id
         FROM items i
+        LEFT JOIN borrowings b ON i.item_id = b.item_id
         WHERE i.owner_id = ?
         ORDER BY i.item_id ASC
         LIMIT ? OFFSET ?
@@ -178,7 +177,7 @@ def user_uploads(owner_id, page=1, page_size=10):
             item_name,
             owner_id,
             item_picture,
-            available
+            borrower_id
         ) = data
         picture_b64 = picture_converter(item_picture)
         result.append({
@@ -186,7 +185,7 @@ def user_uploads(owner_id, page=1, page_size=10):
             "item_name": item_name,
             "owner_id": owner_id,
             "item_picture": picture_b64,
-            "available": available,
+            "borrower_id": borrower_id,
         })
     return result
 
