@@ -29,7 +29,7 @@
   {% if id == session["user_id"] %}
     
     <form action="{{ action_url }}" method="POST" enctype="multipart/form-data">
-      <p>Sinulla ei ole käyttäjäkuva sovelluksessa</p>
+      <p>Sinulla ei ole käyttäjäkuvaa sovelluksessa</p>
       <p><b><label for = "user_picture">Lisää käyttäjäkuva</label></b></p>
       <p><label for = "upload_jpg_picture_max_{{PICTURE_MAXSIZE_KB}}_kilobytes">Lähetä jpg-tiedosto, jonka koko on enintään {{PICTURE_MAXSIZE_KB}} kt</label></p>
       <p><input type="file" name="user_picture" accept=".jpg" /></p>
@@ -37,7 +37,7 @@
       <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
     </form>
   {% else %}
-    <p> Käyttäjällä {{ user }} ei ole käyttäjäkuva</p>
+    <p> Käyttäjällä {{ user }} ei ole käyttäjäkuvaa</p>
   {% endif %}
 
 {% endif %}

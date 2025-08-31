@@ -78,7 +78,7 @@
   </div>
 
   <p><b><label for="item_comment">Kommentti:</label></b></p>
-  <p><textarea id="item_comment" name="item_comment" rows = "6" cols = "50">{{item_comment if item_comment}}</textarea></p>
+  <p><textarea id="item_comment" name="item_comment" rows = "6" cols = "50" maxlength="{{ITEM_COMMENT_MAXLENGTH}}">{{item_comment if item_comment}}</textarea></p>
 
   {% if item_id %}
     <input type="submit" value="Muokkaa" class = "edit button"/>

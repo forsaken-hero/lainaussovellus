@@ -4,7 +4,7 @@
 
 {% block content %}
 
-  {% if item_picture %} <img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" id = "page_picture"> {% endif %}
+  {% if item_picture %}<img src="data:image/jpg;base64,{{ item_picture }}" alt="Tavaran {{ item_name }} kuva" id = "page_picture">{% endif %}
   <div class = "item_page_container bottom_spacer top_spacer">
     <div><b>Omistaja:</b></div><div><a href="/user/{{owner_username}}" id = "user_link">{{owner_username}}</a></div>
     <div><b>Säilytys sijainti:</b></div><div>{{item_location}}</div>

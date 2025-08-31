@@ -9,8 +9,6 @@ import config
 import forum
 import users
 
-#from werkzeug.utils import secure_filename
-
 app = Flask(__name__)
 app.secret_key = config.secret_key
 app.config["USERNAME_PASSWORD_MINLENGTH"] = 3
@@ -18,6 +16,7 @@ app.config["USERNAME_PASSWORD_MAXLENGTH"] = 20
 app.config["PICTURE_MAXSIZE_KB"] = 100
 app.config["ITEM_TEXT_MINLENGTH"] = 1
 app.config["ITEM_TEXT_MAXLENGTH"] = 80
+app.config["ITEM_COMMENT_MAXLENGTH"] = 5000
 app.config["PAGE_SIZE"] = 10
 
 @app.context_processor
@@ -28,6 +27,7 @@ def inject_data():
         "PICTURE_MAXSIZE_KB": app.config["PICTURE_MAXSIZE_KB"],
         "ITEM_TEXT_MINLENGTH": app.config["ITEM_TEXT_MINLENGTH"],
         "ITEM_TEXT_MAXLENGTH": app.config["ITEM_TEXT_MAXLENGTH"],
+        "ITEM_COMMENT_MAXLENGTH": app.config["ITEM_COMMENT_MAXLENGTH"],
         "PAGE_SIZE": app.config["PAGE_SIZE"],
     }
 
@@ -64,15 +64,14 @@ def borrow_check(item_id):
     return None
 
 def return_check(item_id):
-    if forum.is_borrowed(item_id) is None:
-        flash("Tavara on jo varastossa!")
+    if forum.is_borrowed(item_id) == 0:
+        flash("Sovelluksessa ei ole kyseistä tavaraa tai tavara ei ole lainattu!")
         return redirect("/front_page/")
     return None
 
 def check_owner_id(item_id):
-    try:
-        owner_id = int(forum.item_owner_id(item_id))
-    except IndexError:
+    owner_id = forum.item_owner_id(item_id)
+    if owner_id is None:
         flash("Sovelluksessa ei ole kyseistä tavaraa!")
         return redirect("/front_page/")
     if owner_id != int(session["user_id"]):
@@ -81,11 +80,15 @@ def check_owner_id(item_id):
     return None
 
 def check_borrower_id(item_id):
-    borrower_id = int(forum.borrower_id(item_id))
-    if borrower_id != int(session["user_id"]):
-        flash("Tavara ei ole hallussasi!")
+    try:
+        borrower_id = forum.borrower_id(item_id)
+        if borrower_id != int(session["user_id"]):
+            flash("Tavara ei ole hallussasi!")
+            return redirect("/front_page/")
+        return None
+    except IndexError:
+        flash("Sovelluksessa ei ole kyseistä tavaraa, tai tavara ei ole lainattu!")
         return redirect("/front_page/")
-    return None
 
 def length_check(string, a, b):
     if len(string) < a or len(string) > b:
@@ -145,7 +148,7 @@ def user_picture_check():
     return None
 
 def item_picture_check(item_id):
-    if forum.has_no_item_picture(item_id):
+    if forum.has_no_item_picture(item_id) == 1:
         flash("Ei ole tavarakuvaa!")
         return redirect("/item/" + str(item_id))
     return None
@@ -301,7 +304,7 @@ def user_page(user, page=1):
         if data is None:
             flash(f"Sovelluksessa ei ole käyttäjää, jolla tunnus on '{user}'!")
             return redirect("/front_page/")
-        
+
         user_data = data["user_data"]
         user_uploads_count = data["user_uploads_count"]
         page_count = math.ceil(user_uploads_count / page_size)
@@ -310,7 +313,6 @@ def user_page(user, page=1):
             return redirect("/user/" + user + "/1")
         if page > page_count:
             return redirect("/user/" + user + "/" + str(page_count))
-        print("user_data is", user_data)
         return render_template(
             "user.html",
             id=user_data["id"],
@@ -328,6 +330,9 @@ def user_page(user, page=1):
             user_picture = picture_request(fieldname = "user_picture")
         except ValueError:
             flash("Käyttäjäkuvan lataus epäonnistui. Tarkista tiedoston koko ja tyyppi.")
+            return redirect("/user/" + session["username"])
+        if user_picture is None:
+            flash("Et ole valinnut kuvatiedostoa.")
             return redirect("/user/" + session["username"])
         users.upload_picture(user_id=session["user_id"], user_picture=user_picture)
         flash("Käyttäjäkuvan lataus onnistui.")
@@ -373,6 +378,9 @@ def remove_item_picture(item_id):
         return check3
     if request.method == "GET":
         data = forum.item_name_picture(item_id)
+        if data is None:
+            flash("Sovelluksessa ei ole kyseistä tavaraa!")
+            return redirect("/front_page/")
         return render_template(
             "confirmation.html",
             item_id=item_id,
@@ -433,6 +441,11 @@ def upload():
                 item_location,
                 app.config["ITEM_TEXT_MINLENGTH"],
                 app.config["ITEM_TEXT_MAXLENGTH"],
+            )
+            length_check(
+                item_comment,
+                0,
+                app.config["ITEM_COMMENT_MAXLENGTH"],
             )
             item_picture = picture_request("item_picture")
         except ValueError:
@@ -513,6 +526,11 @@ def edit(item_id):
                 app.config["ITEM_TEXT_MINLENGTH"],
                 app.config["ITEM_TEXT_MAXLENGTH"],
             )
+            length_check(
+                item_comment,
+                0,
+                app.config["ITEM_COMMENT_MAXLENGTH"],
+            )
             item_picture = picture_request("item_picture")
         except ValueError:
             flash("Tavaran muokkaus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
@@ -553,6 +571,9 @@ def remove(item_id):
         return check3
     if request.method == "GET":
         data = forum.item_name_picture(item_id)
+        if data is None:
+            flash("Sovelluksessa ei ole kyseistä tavaraa!")
+            return redirect("/front_page/")
         return render_template(
             "confirmation.html",
             item_id=item_id,
@@ -607,6 +628,9 @@ def borrow(item_id):
         return check2
     if request.method == "GET":
         data = forum.item_name_picture(item_id)
+        if data is None:
+            flash("Sovelluksessa ei ole kyseistä tavaraa!")
+            return redirect("/front_page/")            
         return render_template(
             "confirmation.html",
             item_id=item_id,
@@ -625,18 +649,18 @@ def borrow(item_id):
         return redirect(prev_url)
 
 @app.route("/return/<int:item_id>", methods=["GET", "POST"])
-def ret (item_id):
+def ret(item_id):
     check1 = login_check()
     if check1:
         return check1
-    check2 = return_check(item_id)
+    check2 = check_borrower_id(item_id)
     if check2:
         return check2
-    check3 = check_borrower_id(item_id)
-    if check3:
-        return check3
     if request.method == "GET":
         data = forum.item_name_picture(item_id)
+        if data is None:
+            flash("Sovelluksessa ei ole kyseistä tavaraa!")
+            return redirect("/front_page/")    
         return render_template(
             "confirmation.html",
             item_id=item_id,
@@ -694,8 +718,6 @@ def user_borrowings(user, page=1):
         page=page,
         page_count=page_count,
     )
-
-
 
 @app.route("/search", methods=["GET"])
 def search():

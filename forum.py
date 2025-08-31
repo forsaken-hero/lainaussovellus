@@ -60,18 +60,6 @@ def available_items(page=1, page_size=10):
         "available_items": available_items,
     }
 
-def available_items_count():
-    sql = """
-        SELECT COUNT(*)
-        FROM items i
-        WHERE NOT EXISTS (
-            SELECT 1 
-            FROM borrowings b 
-            WHERE b.item_id = i.item_id
-        )
-    """
-    return db.query(sql)[0][0]
-
 def borrowed_items(page=1, page_size=10):
     sql = """
         WITH total_borrowings AS (
@@ -97,6 +85,7 @@ def borrowed_items(page=1, page_size=10):
         LIMIT ? OFFSET ?;
     """
     borrowed_items = []
+    borrowed_items_count = 0
     limit = page_size
     offset = page_size * (page - 1)
     for data in db.query(sql, [limit, offset]):
@@ -130,14 +119,6 @@ def borrowed_items(page=1, page_size=10):
         "borrowed_items": borrowed_items,
         "borrowed_items_count": borrowed_items_count,
     }
-
-def borrowed_items_count():
-    sql = "SELECT COUNT(*) FROM borrowings;"
-    return db.query(sql)[0][0]
-
-def user_uploads_count(owner_id):
-    sql = "SELECT COUNT(*) FROM items WHERE owner_id = ?"
-    return db.query(sql, [owner_id])[0][0]
 
 def is_borrowed(item_id):
     sql = """
@@ -329,23 +310,11 @@ def has_no_item_picture(item_id):
         FROM items
         WHERE item_id = ?
     """
-    return db.query(sql, [item_id])[0][0]
-
-def classification_keys():
-    """Returns dictionary of the classification_keys as the id: classification_name"""    
-    sql = """
-        SELECT classification_keys_id, classification_name
-        FROM classification_keys
-    """
-    return {key_id: name for key_id, name in db.query(sql)}
-
-def characteristic_keys():
-    """Returns dictionary of the characteristic_keys as the id: characteristic_name"""
-    sql = """
-        SELECT characteristic_keys_id, characteristic_name
-        FROM characteristic_keys
-    """
-    return {key_id: name for key_id, name in db.query(sql)}
+    try:
+        result = db.query(sql, [item_id])[0][0]
+    except IndexError:
+        return None
+    return result
 
 def keys():
     sql = """
@@ -369,37 +338,32 @@ def keys():
 
 def item_owner_id(item_id):
     sql = "SELECT owner_id FROM items WHERE item_id = ?"
-    return db.query(sql, [item_id])[0][0]
+    try:
+        owner_id = db.query(sql, [item_id])[0][0]
+    except IndexError:
+        return None
+    return owner_id
 
 def item_picture(item_id):
     sql = "SELECT item_picture FROM items WHERE item_id = ?"
-    item_picture = db.query(sql, [item_id])[0][0]
+    try:
+        item_picture = db.query(sql, [item_id])[0][0]
+    except IndexError:
+        return None
     picture_b64 = picture_converter(item_picture)
     return picture_b64
 
 def item_name_picture(item_id):
     sql = "SELECT item_name, item_picture FROM items WHERE item_id = ?"
-    item_name, item_picture = db.query(sql,[item_id])[0]
+    try:
+        item_name, item_picture = db.query(sql,[item_id])[0]
+    except IndexError:
+        return None
     picture_b64 = picture_converter(item_picture)
     return {
         "item_name": item_name,
         "item_picture": picture_b64,
     }
-
-def item_classifications(item_id):
-    """Returns item_classifications as list of integers"""
-    sql = "SELECT classification_keys_id FROM classifications WHERE item_id = ?"
-    return [key_id for key_id, in db.query(sql, [item_id])]
-
-def item_characteristics(item_id):
-    """Returns item_characteristics as a dictionary of
-    characteristic_keys_id: characteristic_value"""
-    sql = """
-        SELECT characteristic_keys_id, characteristic_value
-        FROM characteristics
-        WHERE item_id = ?
-    """
-    return dict(db.query(sql, [item_id]))
 
 def borrow_item(item_id, borrower_id):
     sql = "INSERT INTO borrowings (item_id, borrower_id, borrow_time) VALUES (?, ?, ?)"
@@ -687,7 +651,6 @@ def user_borrowings_data(user, page=1, page_size=10):
         "user_borrowings_count": user_borrowings_count,
         "user_borrowings": result,
     }
-
 
 def user_uploads(owner_id, page=1, page_size=10):
     sql = """

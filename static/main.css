@@ -154,8 +154,6 @@ nav li a:hover:not(.active) {
     box-sizing: border-box;
     position: relative;
 }
-
-
 .upload_grid {
   display: grid;
   grid-template-columns: 9em auto;

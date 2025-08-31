@@ -22,22 +22,12 @@ def check_login(username, password):
             return user_id
     return None
 
-def username(user_id):
-    sql = "SELECT username FROM users WHERE user_id = ?"
-    return db.query(sql, [user_id])[0][0]
-
-def user_id_picture(user):
-    sql = "SELECT user_id, user_picture FROM users WHERE username = ?"
-    id, user_picture = db.query(sql, [user])[0]
-    picture_b64 = picture_converter(user_picture)
-    return {
-        "id": id,
-        "user_picture": picture_b64,
-    }
-
 def user_picture(user_id):
     sql = "SELECT user_picture FROM users WHERE user_id = ?"
-    row = db.query(sql, [user_id])[0][0]
+    try:
+        row = db.query(sql, [user_id])[0][0]
+    except IndexError:
+        return None
     return picture_converter(row)
 
 def has_no_picture(user_id):
@@ -46,11 +36,11 @@ def has_no_picture(user_id):
         FROM users 
         WHERE user_id = ?
     """
-    return db.query(sql, [user_id])[0][0]
-
-def user_id(user):
-    sql = "SELECT user_id FROM users WHERE username = ?"
-    return db.query(sql, [user])[0][0]
+    try:
+        result = db.query(sql, [user_id])[0][0]
+    except IndexError:
+        return None
+    return result
 
 def upload_picture(user_id, user_picture=None):
     sql = "UPDATE users SET user_picture = ? WHERE user_id = ?"
