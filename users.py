@@ -38,8 +38,7 @@ def user_id_picture(user):
 def user_picture(user_id):
     sql = "SELECT user_picture FROM users WHERE user_id = ?"
     row = db.query(sql, [user_id])[0][0]
-    picture = picture_converter(row)
-    return picture
+    return picture_converter(row)
 
 def has_no_picture(user_id):
     sql = """

@@ -1,14 +1,14 @@
 import math
 import secrets
 import sqlite3
+import markupsafe
+from flask import Flask, abort, flash, redirect, render_template, request, session
+from werkzeug.exceptions import Forbidden
 import db
 import config
 import forum
 import users
-import markupsafe
-import time
-from flask import Flask, abort, flash, redirect, render_template, request, session, g
-from werkzeug.exceptions import Forbidden
+
 #from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -18,16 +18,18 @@ app.config["USERNAME_PASSWORD_MAXLENGTH"] = 20
 app.config["PICTURE_MAXSIZE_KB"] = 100
 app.config["ITEM_TEXT_MINLENGTH"] = 1
 app.config["ITEM_TEXT_MAXLENGTH"] = 80
+app.config["PAGE_SIZE"] = 10
 
 @app.context_processor
 def inject_data():
-    return dict(
-        USERNAME_PASSWORD_MINLENGTH=app.config["USERNAME_PASSWORD_MINLENGTH"],
-        USERNAME_PASSWORD_MAXLENGTH=app.config["USERNAME_PASSWORD_MAXLENGTH"],
-        PICTURE_MAXSIZE_KB=app.config["PICTURE_MAXSIZE_KB"],
-        ITEM_TEXT_MINLENGTH = app.config["ITEM_TEXT_MINLENGTH"],
-        ITEM_TEXT_MAXLENGTH = app.config["ITEM_TEXT_MAXLENGTH"]
-    )
+    return {
+        "USERNAME_PASSWORD_MINLENGTH": app.config["USERNAME_PASSWORD_MINLENGTH"],
+        "USERNAME_PASSWORD_MAXLENGTH": app.config["USERNAME_PASSWORD_MAXLENGTH"],
+        "PICTURE_MAXSIZE_KB": app.config["PICTURE_MAXSIZE_KB"],
+        "ITEM_TEXT_MINLENGTH": app.config["ITEM_TEXT_MINLENGTH"],
+        "ITEM_TEXT_MAXLENGTH": app.config["ITEM_TEXT_MAXLENGTH"],
+        "PAGE_SIZE": app.config["PAGE_SIZE"],
+    }
 
 @app.template_filter()
 def show_lines(content):
@@ -51,31 +53,39 @@ def login_check():
     try:
         require_login()
         return None
-    except:
+    except Forbidden:
         flash("Et ole kirjautunut sisään. Kirjaudu sisään ensin")
         return redirect("/")
 
 def borrow_check(item_id):
     if forum.is_borrowed(item_id) == 1:
         flash("Tavara on lainattu!")
-        return redirect("/front_page/")      
+        return redirect("/front_page/")
+    return None
 
 def return_check(item_id):
     if forum.is_borrowed(item_id) is None:
         flash("Tavara on jo varastossa!")
-        return redirect("/front_page/")      
+        return redirect("/front_page/")
+    return None
 
 def check_owner_id(item_id):
-    owner_id = int(forum.item_owner_id(item_id))
+    try:
+        owner_id = int(forum.item_owner_id(item_id))
+    except IndexError:
+        flash("Sovelluksessa ei ole kyseistä tavaraa!")
+        return redirect("/front_page/")
     if owner_id != int(session["user_id"]):
         flash("Sinulla ei ole oikeutta muokata kyseistä tavaraa!")
         return redirect("/front_page/")
+    return None
 
 def check_borrower_id(item_id):
     borrower_id = int(forum.borrower_id(item_id))
     if borrower_id != int(session["user_id"]):
         flash("Tavara ei ole hallussasi!")
         return redirect("/front_page/")
+    return None
 
 def length_check(string, a, b):
     if len(string) < a or len(string) > b:
@@ -83,7 +93,7 @@ def length_check(string, a, b):
 
 def check_query(query):
     if not query:
-        raise ValueError("VIRHE: hakusana ei annettu!") 
+        raise ValueError("VIRHE: hakusana ei annettu!")
 
 def picture_check(
     file,
@@ -120,7 +130,7 @@ def characteristics_request(
         form_tag = form_base + str(form_id)
         try:
             characteristic_value = request.form[form_tag]
-        except:
+        except KeyError:
             break
         if not characteristic_value:
             continue
@@ -132,11 +142,13 @@ def user_picture_check():
     if users.has_no_picture(session["user_id"]):
         flash("Sinulla ei ole käyttäjäkuvaa!")
         return redirect("/user/" + str(session["username"]))
-    
+    return None
+
 def item_picture_check(item_id):
     if forum.has_no_item_picture(item_id):
         flash("Ei ole tavarakuvaa!")
-        return redirect("/item/" + str(item_id))        
+        return redirect("/item/" + str(item_id))
+    return None
 
 """-------------------------------APPLICATION-----------------------------"""
 @app.route("/", methods=["GET", "POST"])
@@ -144,7 +156,7 @@ def login():
     try:
         require_login()
         return redirect("/front_page/")
-    except:
+    except Forbidden:
         if request.method == "GET":
             if "csrf_token" not in session:
                 session["csrf_token"] = secrets.token_hex(16)
@@ -164,7 +176,7 @@ def login():
                     app.config["USERNAME_PASSWORD_MINLENGTH"],
                     app.config["USERNAME_PASSWORD_MAXLENGTH"],
                 )
-            except:
+            except ValueError:
                 flash("VIRHE: Tarkista että sekä käyttäjätunnus että salasana on annettu oikein!")
                 return redirect("/")
             user_id = users.check_login(username, password)
@@ -173,17 +185,16 @@ def login():
                 session["username"] = username
                 session["csrf_token"] = secrets.token_hex(16)
                 return redirect("/front_page/")
-            else:
-                flash("VIRHE: Väärä tunnus tai salasana")
-                return render_template("login.html")
+            flash("VIRHE: Väärä tunnus tai salasana")
+            return render_template("login.html")
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
     try:
         require_login()
-        flash('Kirjaudu ulos ensin päästäksesi rekisteröimään uudella tunnuksella')
+        flash("Kirjaudu ulos ensin päästäksesi rekisteröimään uudella tunnuksella")
         return redirect("/front_page/")
-    except:
+    except Forbidden:
         if request.method == "GET":
             return render_template("register.html", filled={})
         if request.method == "POST":
@@ -207,7 +218,7 @@ def register():
                     app.config["USERNAME_PASSWORD_MINLENGTH"],
                     app.config["USERNAME_PASSWORD_MAXLENGTH"],
                 )
-            except:
+            except ValueError:
                 filled = {"username": username}
                 flash("VIRHE: Tarkista että sekä käyttäjätunnus että salasana on annettu oikein!")
                 return render_template("register.html", filled=filled)
@@ -230,9 +241,9 @@ def front_page(page=1):
     check1 = login_check()
     if check1:
         return check1
-    
-    available_items_count = forum.available_items_count()
-    page_size = 10
+    page_size = app.config["PAGE_SIZE"]
+    data = forum.available_items(page, page_size)
+    available_items_count = data["available_items_count"]
     page_count = math.ceil(available_items_count / page_size)
     page_count = max(page_count, 1)
     if page < 1:
@@ -243,20 +254,20 @@ def front_page(page=1):
         "front_page.html",
         available_items_count=available_items_count,
         username=session["username"],
-        available_items=forum.available_items(page, page_size),
+        available_items=data["available_items"],
         page=page,
         page_count=page_count,
     )
 
 @app.route("/borrowings/", methods=["GET"])
 @app.route("/borrowings/<int:page>", methods=["GET"])
-def borrowings(page = 1):
+def borrowings(page=1):
     check1 = login_check()
     if check1:
         return check1
-    
-    borrowed_items_count = forum.borrowed_items_count()
-    page_size = 10
+    page_size = app.config["PAGE_SIZE"]
+    data = forum.borrowed_items(page, page_size)
+    borrowed_items_count = data["borrowed_items_count"]
     page_count = math.ceil(borrowed_items_count / page_size)
     page_count = max(page_count, 1)
     if page < 1:
@@ -265,7 +276,7 @@ def borrowings(page = 1):
         return redirect("/borrowings/" + str(page_count))
     return render_template(
         "borrowings.html",
-        borrowed_items=forum.borrowed_items(page, page_size),
+        borrowed_items=data["borrowed_items"],
         borrowed_items_count=borrowed_items_count,
         page=page,
         page_count=page_count,
@@ -285,36 +296,37 @@ def user_page(user, page=1):
     if check1:
         return check1
     if request.method == "GET":
-        try:
-            data = users.user_id_picture(user)
-            id = data["id"]
-            user_picture = data["user_picture"]
-        except:
+        page_size = app.config["PAGE_SIZE"]
+        data = forum.user_uploads(user, page, page_size)
+        if data is None:
             flash(f"Sovelluksessa ei ole käyttäjää, jolla tunnus on '{user}'!")
-            return redirect("/front_page/")            
-        user_uploads_count = forum.user_uploads_count(id)
-        page_size = 10
+            return redirect("/front_page/")
+        
+        user_data = data["user_data"]
+        user_uploads_count = data["user_uploads_count"]
         page_count = math.ceil(user_uploads_count / page_size)
         page_count = max(page_count, 1)
         if page < 1:
             return redirect("/user/" + user + "/1")
         if page > page_count:
             return redirect("/user/" + user + "/" + str(page_count))
+        print("user_data is", user_data)
         return render_template(
             "user.html",
-            id=id,
+            id=user_data["id"],
             user=user,
-            user_picture=user_picture,
+            user_picture=user_data["user_picture"],
             user_uploads_count=user_uploads_count,
-            user_uploads=forum.user_uploads(id, page, page_size),
+            user_uploads=data["user_uploads"],
             page=page,
             page_count=page_count,
         )
+
     if request.method == "POST":
         check_csrf()
         try:
             user_picture = picture_request(fieldname = "user_picture")
-        except:
+        except ValueError:
             flash("Käyttäjäkuvan lataus epäonnistui. Tarkista tiedoston koko ja tyyppi.")
             return redirect("/user/" + session["username"])
         users.upload_picture(user_id=session["user_id"], user_picture=user_picture)
@@ -335,18 +347,17 @@ def remove_user_picture():
             "confirmation.html",
             item_picture=user_picture,
             remove_user_picture=1,
-            prev_url = request.referrer
+            prev_url = request.referrer,
         )
     if request.method == "POST":
-        check_csrf()            
+        check_csrf()
         choice = request.form.get("choice")
         if choice == "Kyllä":
             users.remove_picture(session["user_id"])
             flash("Käyttäjäkuvan poisto onnistui")
             return redirect("/user/" + session["username"])
-        else:
-            prev_url = request.form.get("prev_url", "/user/" + session["username"])
-            return redirect(prev_url)
+        prev_url = request.form.get("prev_url", "/user/" + session["username"])
+        return redirect(prev_url)
 
 @app.route("/remove_item_picture/", methods=["GET", "POST"])
 @app.route("/remove_item_picture/<int:item_id>", methods=["GET", "POST"])
@@ -362,41 +373,37 @@ def remove_item_picture(item_id):
         return check3
     if request.method == "GET":
         data = forum.item_name_picture(item_id)
-        item_name = data["item_name"]
-        item_picture = data["item_picture"]
         return render_template(
             "confirmation.html",
             item_id=item_id,
-            item_name=item_name,
-            item_picture=item_picture,
+            item_name=data["item_name"],
+            item_picture=data["item_picture"],
             remove_item_picture=1,
             prev_url=request.referrer,
         )
     if request.method == "POST":
-        check_csrf()            
+        check_csrf()
         choice = request.form.get("choice")
         if choice == "Kyllä":
             forum.remove_item_picture(item_id)
             flash("Tavarakuvan poisto onnistui")
-            return redirect("/item/" + str(item_id))  
-        else:
-            prev_url = request.form.get("prev_url", "/item/" + str(item_id))
-            return redirect(prev_url)        
+            return redirect("/item/" + str(item_id))
+        prev_url = request.form.get("prev_url", "/item/" + str(item_id))
+        return redirect(prev_url)
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
     check1 = login_check()
     if check1:
         return check1
-    if request.method == "GET": 
-        classification_keys = forum.classification_keys()
-        characteristic_keys = forum.characteristic_keys()
+    keys = forum.keys()
+    if request.method == "GET":
         return render_template(
             "upload.html",
-            classification_keys=classification_keys,
-            characteristic_keys=characteristic_keys,
+            classification_keys=keys["classification_keys"],
+            characteristic_keys=keys["characteristic_keys"],
         )
-    if request.method == "POST":  
+    if request.method == "POST":
         check_csrf()
         item_name = request.form["item_name"]
         item_location = request.form["item_location"]
@@ -404,15 +411,16 @@ def upload():
         item_comment = request.form.get("item_comment")
         try:
             item_characteristics = characteristics_request()
-        except: 
+        except ValueError:
+            keys = forum.keys()
             flash("VIRHE: Virheellinen ominaisuuksien syötteen pituus!")
             return render_template(
                 "upload.html",
                 item_name=item_name,
                 item_location=item_location,
                 item_classifications=item_classifications,
-                classification_keys=forum.classification_keys(),
-                characteristic_keys=forum.characteristic_keys(),
+                classification_keys=keys["classification_keys"],
+                characteristic_keys=keys["characteristic_keys"],
                 item_comment=item_comment,
             )
         try:
@@ -427,7 +435,7 @@ def upload():
                 app.config["ITEM_TEXT_MAXLENGTH"],
             )
             item_picture = picture_request("item_picture")
-        except:
+        except ValueError:
             flash("Tavaran lisäys epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
             return render_template(
                 "upload.html",
@@ -435,8 +443,8 @@ def upload():
                 item_location=item_location,
                 item_classifications=item_classifications,
                 item_characteristics=item_characteristics,
-                classification_keys=forum.classification_keys(),
-                characteristic_keys=forum.characteristic_keys(),
+                classification_keys=keys["classification_keys"],
+                characteristic_keys=keys["characteristic_keys"],
                 item_comment=item_comment,
             )
         item_id = forum.upload_item(
@@ -459,37 +467,30 @@ def edit(item_id):
     check2 = check_owner_id(item_id)
     if check2:
         return check2
+    keys = forum.keys()
     if request.method == "GET":
-        classification_keys = forum.classification_keys()
-        characteristic_keys = forum.characteristic_keys()
         data = forum.edit_page_data(item_id)
-        item_name = data["item_name"]
-        item_location = data["item_location"]
-        item_picture = data["item_picture"]
-        item_comment = data["item_comment"]
-        item_classifications = forum.item_classifications(item_id)
-        item_characteristics = forum.item_characteristics(item_id)
         return render_template(
             "upload.html",
             item_id=item_id,
-            item_name=item_name,
-            item_location=item_location,
-            item_picture=item_picture,
-            item_comment=item_comment,
-            classification_keys=classification_keys,
-            characteristic_keys=characteristic_keys,
-            item_classifications=item_classifications,
-            item_characteristics=item_characteristics,
+            item_name=data["item_name"],
+            item_location=data["item_location"],
+            item_picture=data["item_picture"],
+            item_comment=data["item_comment"],
+            classification_keys=keys["classification_keys"],
+            characteristic_keys=keys["characteristic_keys"],
+            item_classifications=data["item_classifications"],
+            item_characteristics=data["item_characteristics"],
         )
     if request.method == "POST":
         check_csrf()
-        item_name = request.form["item_name"]; 
-        item_location = request.form["item_location"]; 
+        item_name = request.form["item_name"]
+        item_location = request.form["item_location"]
         item_classifications = [int(x) for x in request.form.getlist("classification_checkbox[]")]
         item_comment = request.form.get("item_comment")
         try:
             item_characteristics = characteristics_request()
-        except: 
+        except ValueError:
             flash("VIRHE: Virheellinen ominaisuuksien syötteen pituus!")
             return render_template(
                 "upload.html",
@@ -497,8 +498,8 @@ def edit(item_id):
                 item_name=item_name,
                 item_location=item_location,
                 item_classifications=item_classifications,
-                classification_keys=forum.classification_keys(),
-                characteristic_keys=forum.characteristic_keys(),
+                classification_keys=keys["classification_keys"],
+                characteristic_keys=keys["characteristic_keys"],
                 item_comment=item_comment,
             )
         try:
@@ -513,7 +514,7 @@ def edit(item_id):
                 app.config["ITEM_TEXT_MAXLENGTH"],
             )
             item_picture = picture_request("item_picture")
-        except:
+        except ValueError:
             flash("Tavaran muokkaus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
             return render_template(
                 "upload.html",
@@ -523,8 +524,8 @@ def edit(item_id):
                 item_picture=forum.item_picture(item_id),
                 item_classifications=item_classifications,
                 item_characteristics=item_characteristics,
-                classification_keys=forum.classification_keys(),
-                characteristic_keys=forum.characteristic_keys(),
+                classification_keys=keys["classification_keys"],
+                characteristic_keys=keys["characteristic_keys"],
                 item_comment=item_comment,
             )
         forum.edit_item(
@@ -537,7 +538,7 @@ def edit(item_id):
             item_characteristics=item_characteristics,
         )
         flash("Tavaran muokkaus onnistui")
-        return redirect("/item/" + str(item_id))  
+        return redirect("/item/" + str(item_id))
 
 @app.route("/remove/<int:item_id>", methods=["GET", "POST"])
 def remove(item_id):
@@ -550,70 +551,51 @@ def remove(item_id):
     check3 = borrow_check(item_id)
     if check3:
         return check3
-    if request.method == "GET": 
+    if request.method == "GET":
         data = forum.item_name_picture(item_id)
-        item_name = data["item_name"]
-        item_picture = data["item_picture"]
         return render_template(
             "confirmation.html",
             item_id=item_id,
-            item_name=item_name,
-            item_picture=item_picture,
+            item_name=data["item_name"],
+            item_picture=data["item_picture"],
             remove=1,
             prev_url=request.referrer,
         )
     if request.method == "POST":
-        check_csrf()            
+        check_csrf()
         choice = request.form.get("choice")
         if choice == "Kyllä":
             forum.remove_item(item_id)
             flash("Tavaran poisto onnistui")
-            return redirect("/front_page/")  
-        else:
-            prev_url = request.form.get("prev_url", "/front_page/")
-            return redirect(prev_url)
-        
+            return redirect("/front_page/")
+        prev_url = request.form.get("prev_url", "/front_page/")
+        return redirect(prev_url)
+
 @app.route("/item/<int:item_id>", methods=["GET"])
 def item(item_id):
     check1 = login_check()
     if check1:
         return check1
-    
-    classification_keys = forum.classification_keys()
-    characteristic_keys = forum.characteristic_keys()
-    item_classifications = forum.item_classifications(item_id)
-    item_characteristics = forum.item_characteristics(item_id)
-    data = forum.item_page_data(item_id)
-    item_name = data["item_name"]
-    owner_id = data["owner_id"]
-    item_location = data["item_location"]
-    item_picture = data["item_picture"]
-    item_comment = data["item_comment"]
-    owner_username = data["owner_username"]
-    borrower_username = data["borrower_username"]
-    borrow_clock = data["borrow_clock"]
-    borrow_date = data["borrow_date"]
-    if owner_id == int(session["user_id"]):
-        allowed = 1
-    else:
-        allowed = None
-    return render_template(
-        "item.html",
-        item_id=item_id,
-        item_name=item_name,
-        item_location=item_location,
-        owner_username=owner_username,
-        item_picture=item_picture,
-        item_comment=item_comment,
-        classification_keys=classification_keys,
-        characteristic_keys=characteristic_keys,
-        item_classifications=item_classifications,
-        item_characteristics=item_characteristics,
-        allowed=allowed,
-        borrower_username=borrower_username,
-        borrow_date=borrow_date,
-        borrow_clock=borrow_clock
-    )
+    try:
+        data = forum.item_page_data(item_id)
+        return render_template(
+            "item.html",
+            item_id=item_id,
+            item_name=data["item_name"],
+            item_location=data["item_location"],
+            owner_username=data["owner_username"],
+            item_picture=data["item_picture"],
+            item_comment=data["item_comment"],
+            item_classifications=data["item_classifications"],
+            item_characteristics=data["item_characteristics"],
+            allowed=1 if data["owner_id"] == int(session["user_id"]) else None,
+            borrower_username=data["borrower_username"],
+            borrow_date=data["borrow_date"],
+            borrow_clock=data["borrow_clock"],
+        )
+    except TypeError:
+        flash("Sovelluksessa ei ole kyseistä tavaraa!")
+        return redirect("/front_page/")
 
 @app.route("/borrow/<int:item_id>", methods=["GET", "POST"])
 def borrow(item_id):
@@ -625,25 +607,22 @@ def borrow(item_id):
         return check2
     if request.method == "GET":
         data = forum.item_name_picture(item_id)
-        item_name = data["item_name"]
-        item_picture = data["item_picture"]
         return render_template(
             "confirmation.html",
             item_id=item_id,
-            item_name=item_name,
-            item_picture=item_picture,
+            item_name=data["item_name"],
+            item_picture=data["item_picture"],
             prev_url=request.referrer,
         )
     if request.method == "POST":
-        check_csrf()     
+        check_csrf()
         choice = request.form.get("choice")
         if choice == "Kyllä":
             forum.borrow_item(item_id, session["user_id"])
             flash("Tavaran lainaus onnistui")
-            return redirect("/front_page/")  
-        else:
-            prev_url = request.form.get("prev_url", "/front_page/")
-            return redirect(prev_url)
+            return redirect("/front_page/")
+        prev_url = request.form.get("prev_url", "/front_page/")
+        return redirect(prev_url)
 
 @app.route("/return/<int:item_id>", methods=["GET", "POST"])
 def ret (item_id):
@@ -657,27 +636,24 @@ def ret (item_id):
     if check3:
         return check3
     if request.method == "GET":
-        data = forum.item_name_picture(item_id)   
-        item_name = data["item_name"]
-        item_picture = data["item_picture"]
+        data = forum.item_name_picture(item_id)
         return render_template(
             "confirmation.html",
             item_id=item_id,
-            item_name=item_name,
-            item_picture=item_picture,
+            item_name=data["item_name"],
+            item_picture=data["item_picture"],
             ret=1,
             prev_url=request.referrer,
         )
     if request.method == "POST":
-        check_csrf()     
+        check_csrf()
         choice = request.form.get("choice")
         if choice == "Kyllä":
             forum.return_item(item_id)
             flash("Tavaran palautus onnistui")
-            return redirect("/front_page/")  
-        else:
-            prev_url = request.form.get("prev_url", "/front_page/")
-            return redirect(prev_url)
+            return redirect("/front_page/")
+        prev_url = request.form.get("prev_url", "/front_page/")
+        return redirect(prev_url)
 
 @app.route("/user_borrowings/", methods=["GET"])
 def user_borrowings_reroute():
@@ -692,9 +668,17 @@ def user_borrowings(user, page=1):
     check1 = login_check()
     if check1:
         return check1
-    borrower_id = users.user_id(user)
-    user_borrowings_count = forum.user_borrowings_count(borrower_id)
-    page_size = 10
+    page_size = app.config["PAGE_SIZE"]
+    data = forum.user_borrowings_data(
+        user=user,
+        page=page,
+        page_size=page_size,
+    )
+    if data is None:
+        flash(f"Ei ole käyttäjää tunnuksella '{user}'!")
+        return redirect("/front_page/")
+    borrower_id = data["borrower_id"]
+    user_borrowings_count = data["user_borrowings_count"]
     page_count = math.ceil(user_borrowings_count / page_size)
     page_count = max(page_count, 1)
     if page < 1:
@@ -705,25 +689,27 @@ def user_borrowings(user, page=1):
         "user_borrowings.html",
         borrower_id=borrower_id,
         user=user,
-        user_borrowings=forum.user_borrowings(borrower_id, page, page_size),
+        user_borrowings=data["user_borrowings"],
         user_borrowings_count=user_borrowings_count,
         page=page,
         page_count=page_count,
     )
+
+
 
 @app.route("/search", methods=["GET"])
 def search():
     check1 = login_check()
     if check1:
         return check1
+    page_size = app.config["PAGE_SIZE"]
     query = request.args.get("query", "")
     try:
         check_query(query)
-    except:
+    except ValueError:
         flash("VIRHE: Hakusana ei annettu!")
-        return render_template("search.html")  
+        return render_template("search.html")
     page = request.args.get("page", 1, type=int)
-    page_size = 10
     return render_template(
         "search.html",
         results=forum.search(query, page, page_size),

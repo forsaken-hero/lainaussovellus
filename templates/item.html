@@ -11,13 +11,13 @@
     <div><b>Luokkitelut:</b></div>
     <div>
       {% for classification in item_classifications %}
-        <ul class = "classification">{{classification_keys[classification]}}</ul>
+        <ul class = "classification">{{classification}}</ul>
       {% endfor %}
     </div>
     <div><b>Ominaisuudet:</b></div>
     <div class = "characteristics_grid">
-      {% for characteristic in item_characteristics %}
-        <div>{{characteristic_keys[characteristic]}}:</div><div>{{item_characteristics[characteristic]}}</div>
+      {% for characteristic_name in item_characteristics %}
+        <div>{{characteristic_name}}:</div><div>{{item_characteristics[characteristic_name]}}</div>
       {% endfor %}
     </div>
 
