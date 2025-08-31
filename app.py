@@ -449,7 +449,9 @@ def upload():
             )
             item_picture = picture_request("item_picture")
         except ValueError:
-            flash("Tavaran lisäys epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
+            flash(
+                "Tavaran lisäys epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät."
+            )
             return render_template(
                 "upload.html",
                 item_name=item_name,
@@ -533,7 +535,9 @@ def edit(item_id):
             )
             item_picture = picture_request("item_picture")
         except ValueError:
-            flash("Tavaran muokkaus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät.")
+            flash(
+                "Tavaran muokkaus epäonnistui. Tarkista kuvan koko ja tyyppi, sekä pakolliset kentät."
+            )
             return render_template(
                 "upload.html",
                 item_id=item_id,
@@ -630,7 +634,7 @@ def borrow(item_id):
         data = forum.item_name_picture(item_id)
         if data is None:
             flash("Sovelluksessa ei ole kyseistä tavaraa!")
-            return redirect("/front_page/")            
+            return redirect("/front_page/")
         return render_template(
             "confirmation.html",
             item_id=item_id,
@@ -660,7 +664,7 @@ def ret(item_id):
         data = forum.item_name_picture(item_id)
         if data is None:
             flash("Sovelluksessa ei ole kyseistä tavaraa!")
-            return redirect("/front_page/")    
+            return redirect("/front_page/")
         return render_template(
             "confirmation.html",
             item_id=item_id,

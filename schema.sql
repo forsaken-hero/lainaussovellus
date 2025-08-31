@@ -2,8 +2,7 @@ CREATE TABLE users (
     user_id INTEGER PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    user_picture BLOB DEFAULT NULL--,
-    --administrator BOOLEAN DEFAULT 0
+    user_picture BLOB DEFAULT NULL
 );
 
 CREATE TABLE items (
@@ -12,8 +11,6 @@ CREATE TABLE items (
     owner_id INTEGER NOT NULL,
     item_location TEXT NOT NULL,
     item_picture BLOB DEFAULT NULL,
-    --uploaded BOOLEAN DEFAULT 1,
-    --borrowed BOOLEAN DEFAULT 0,
     item_comment TEXT DEFAULT NULL,
     FOREIGN KEY(owner_id) REFERENCES users(user_id)
 
